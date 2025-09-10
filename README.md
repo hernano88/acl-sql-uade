@@ -63,3 +63,70 @@ SQL (consultas para extracción de inscripciones, aranceles y becas)
 Excel (tablas dinámicas y controles de proyección)
 
 Procesos ETL para integración de fuentes de datos
+
+
+---
+
+# Proyecto Conciliación de Inscripciones, Becas, y demas conceptos criticos.
+
+Modelo de ETL + SQL para automatizar controles de facturación y conciliación de inscripciones, con el objetivo de detectar y justificar diferencias antes del envío a gestión de cobranzas.
+
+---
+
+🎯 Objetivo
+
+Automatizar procesos de conciliación en facturación masiva.
+
+Validar inscripciones, aranceles, descuentos y becas en tablas de Oracle.
+
+Justificar diferencias con reportes detallados y criterios de negocio.
+
+Reducir errores y escalar procesos críticos con mínimo mantenimiento.
+
+---
+
+🛠️ Desarrollo
+
+Scripts en ACL (lenguaje similar a Python/SQL) sobre Oracle.
+
+Consultas SQL para extracción, transformación y validación de datos.
+
+Adaptación automática de controles según calendario mensual.
+
+Integración con herramientas complementarias (Toad) para exploración y documentación de tablas intermedias.
+
+---
+
+📸 Ejemplo de consultas SQL anonimizadas:
+
+
+📸 Ejemplo de conciliación y justificación de diferencias:
+
+
+📸 Ejemplo de joins y reglas de validación en ETL:
+
+---
+
+
+📊 Resultados
+
+Cobertura del 97% de la operatoria mensual (asignaturas, matrículas, maestrías, descuentos, becas, bajas).
+
+Procesamiento de volúmenes de datos superiores a 5GB con tiempos eficientes.
+
+Justificación de diferencias anticipada, evitando errores en la gestión de cobranzas.
+
+Escalabilidad y mantenimiento reducido gracias a controles dinámicos.
+
+---
+
+🔧 Tecnologías utilizadas
+
+ACL (Audit Command Language)
+
+Oracle SQL
+
+Toad
+
+Excel para reportes de conciliación y visualización
+
