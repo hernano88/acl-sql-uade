@@ -99,11 +99,15 @@ Integración con herramientas complementarias (Toad) para exploración y documen
 
 📸 Ejemplo de consultas SQL anonimizadas:
 
+![Control de Facturación](https://raw.githubusercontent.com/hernano88/acl-sql-uade/main/pictures/conciliacion_asignatura.PNG)
 
 📸 Ejemplo de conciliación y justificación de diferencias:
 
+![Control de Facturación](https://raw.githubusercontent.com/hernano88/acl-sql-uade/main/pictures/conciliacion_asignatura.PNG)
 
 📸 Ejemplo de joins y reglas de validación en ETL:
+
+![Control de Facturación](https://raw.githubusercontent.com/hernano88/acl-sql-uade/main/pictures/conciliacion_asignatura.PNG)
 
 ---
 
