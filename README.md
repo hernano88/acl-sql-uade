@@ -4,6 +4,10 @@ Modelo de control desarrollado en Excel/SQL para validar ingresos estimados vs. 
 
 ---
 
+⚠️ **Confidencialidad**: Los datos del repositorio público están **anonimizados** (o reemplazados por valores ficticios/escala). El contenido tiene fines demostrativos para mi CV/portfolio.
+
+---
+
 ## 🎯 Objetivo
 
 Implementar un control que permita:
@@ -97,7 +101,7 @@ Integración con herramientas complementarias (Toad) para exploración y documen
 
 ---
 
-📸 Ejemplo de consultas SQL anonimizadas:
+📸 Ejemplo de consultas SQL:
 
 ![Control de Facturación](https://raw.githubusercontent.com/hernano88/acl-sql-uade/main/pictures/sql.PNG)
 
