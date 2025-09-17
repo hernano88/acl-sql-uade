@@ -1,6 +1,6 @@
 # Proyecto Control de Facturación Masiva y Proyección de Ingresos
 
-Modelo de control desarrollado en Excel/SQL para validar ingresos estimados vs. reales en un proceso masivo de inscripciones y aranceles.
+Modelo de control desarrollado en ACL/SQL/Excel para validar ingresos estimados vs. reales en un proceso masivo de inscripciones y aranceles.
 
 ---
 
@@ -66,7 +66,7 @@ SQL (consultas para extracción de inscripciones, aranceles y becas)
 
 Excel (tablas dinámicas y controles de proyección)
 
-Procesos ETL para integración de fuentes de datos
+Procesos ETL para integración de fuentes de datos en ACL
 
 
 ---
