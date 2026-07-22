@@ -1,6 +1,6 @@
 # Financial Billing Reconciliation with ACL Analytics and Oracle SQL
 
-[English](README.md) | [Espa?ol](README.es.md)
+[English](README.md) | [Español](README.es.md)
 
 A professional data-control case study based on automated billing reconciliation work. The solution combines Oracle SQL for extracting and shaping operational data, ACL Analytics for repeatable control rules, and Excel outputs for business review and exception management.
 

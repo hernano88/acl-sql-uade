@@ -1,42 +1,42 @@
-# Conciliaci?n financiera de facturaci?n con ACL Analytics y Oracle SQL
+# Conciliación financiera de facturación con ACL Analytics y Oracle SQL
 
-[English](README.md) | [Espa?ol](README.es.md)
+[English](README.md) | [Español](README.es.md)
 
-Caso profesional de control de datos basado en la automatizaci?n de conciliaciones de facturaci?n. La soluci?n combina Oracle SQL para extraer y preparar informaci?n operativa, ACL Analytics para ejecutar reglas de control repetibles y Excel para la revisi?n de resultados y gesti?n de excepciones.
+Caso profesional de control de datos basado en la automatización de conciliaciones de facturación. La solución combina Oracle SQL para extraer y preparar información operativa, ACL Analytics para ejecutar reglas de control repetibles y Excel para la revisión de resultados y gestión de excepciones.
 
-Todo el c?digo, los datos, los identificadores y las capturas p?blicas son sint?ticos o fueron sanitizados. Se excluyen deliberadamente scripts productivos, conexiones, informaci?n de estudiantes y objetos internos de base de datos.
+Todo el código, los datos, los identificadores y las capturas públicas son sintéticos o fueron sanitizados. Se excluyen deliberadamente scripts productivos, conexiones, información de estudiantes y objetos internos de base de datos.
 
 ## Problema de negocio
 
-La facturaci?n masiva combina inscripciones, aranceles, becas, descuentos, bajas y ajustes especiales. La informaci?n puede diferir entre reportes operativos y fuentes de base de datos. Una comparaci?n manual es lenta, dif?cil de repetir y puede omitir excepciones de baja frecuencia.
+La facturación masiva combina inscripciones, aranceles, becas, descuentos, bajas y ajustes especiales. La información puede diferir entre reportes operativos y fuentes de base de datos. Una comparación manual es lenta, difícil de repetir y puede omitir excepciones de baja frecuencia.
 
-El esquema de control fue dise?ado para:
+El esquema de control fue diseñado para:
 
-- comparar facturaci?n esperada y real;
+- comparar facturación esperada y real;
 - conciliar inscripciones y movimientos financieros;
 - aplicar reglas de negocio de forma consistente;
 - clasificar diferencias justificables;
-- aislar excepciones antes de la gesti?n de cobranzas;
-- medir cu?nto valor econ?mico est? protegido por controles fuertes.
+- aislar excepciones antes de la gestión de cobranzas;
+- medir cuánto valor económico está protegido por controles fuertes.
 
 ## Flujo implementado
 
 ```mermaid
 flowchart LR
-    A["Fuentes operativas Oracle"] --> B["Extracci?n con Oracle SQL"]
-    B --> C["Normalizaci?n y joins en ACL"]
-    C --> D["Reglas de validaci?n"]
-    D --> E["Conciliaci?n esperado vs. real"]
+    A["Fuentes operativas Oracle"] --> B["Extracción con Oracle SQL"]
+    B --> C["Normalización y joins en ACL"]
+    C --> D["Reglas de validación"]
+    D --> E["Conciliación esperado vs. real"]
     E --> F["Diferencias clasificadas"]
     F --> G["Reporte de control en Excel"]
-    G --> H["Revisi?n manual de excepciones"]
+    G --> H["Revisión manual de excepciones"]
 ```
 
-Oracle SQL y ACL cumplen responsabilidades diferentes: SQL construye el universo de datos cerca de la fuente; ACL estandariza campos, combina extracciones, eval?a reglas, resume resultados y exporta el reporte de control.
+Oracle SQL y ACL cumplen responsabilidades diferentes: SQL construye el universo de datos cerca de la fuente; ACL estandariza campos, combina extracciones, evalúa reglas, resume resultados y exporta el reporte de control.
 
 ## KPI principal: cobertura financiera mensual del control
 
-El resultado aproximado del **98%** es una m?trica mensual de cobertura financiera. No es precisi?n de un pron?stico ni significa que el 98% de las facturas est?n libres de errores.
+El resultado aproximado del **98%** es una métrica mensual de cobertura financiera. No es precisión de un pronóstico ni significa que el 98% de las facturas estén libres de errores.
 
 ```text
 cobertura financiera del control =
@@ -45,22 +45,22 @@ cobertura financiera del control =
                   monto total facturado
 ```
 
-El ejemplo mensual sint?tico del repositorio utiliza un monto total de 100.000 unidades. Los conceptos alcanzados por controles automatizados fuertes representan 98.000 unidades, lo que produce una cobertura financiera del 98% para ese per?odo de facturaci?n. El 2% restante corresponde a conceptos de menor volumen o situaciones excepcionales enviadas a revisi?n manual.
+El ejemplo mensual sintético del repositorio utiliza un monto total de 100.000 unidades. Los conceptos alcanzados por controles automatizados fuertes representan 98.000 unidades, lo que produce una cobertura financiera del 98% para ese período de facturación. El 2% restante corresponde a conceptos de menor volumen o situaciones excepcionales enviadas a revisión manual.
 
-![Ejemplo sint?tico de cobertura financiera del 98 por ciento](docs/images/financial-control-coverage.png)
+![Ejemplo sintético de cobertura financiera del 98 por ciento](docs/images/financial-control-coverage.png)
 
 ## Capas de control
 
-### 1. Extracci?n con Oracle SQL
+### 1. Extracción con Oracle SQL
 
-Las consultas Oracle SQL embebidas seleccionan el per?odo requerido y combinan informaci?n de inscripciones, l?neas de facturaci?n, conceptos y resultados del control. Las consultas p?blicas representativas demuestran:
+Las consultas Oracle SQL embebidas seleccionan el período requerido y combinan información de inscripciones, líneas de facturación, conceptos y resultados del control. Las consultas públicas representativas demuestran:
 
-- `INNER JOIN` y `LEFT JOIN` entre m?ltiples tablas;
+- `INNER JOIN` y `LEFT JOIN` entre múltiples tablas;
 - expresiones comunes de tabla;
-- filtrado y normalizaci?n de fechas;
+- filtrado y normalización de fechas;
 - tratamiento de nulos con `NVL`;
 - agregaciones por concepto y estado;
-- conciliaci?n entre importes esperados y facturados.
+- conciliación entre importes esperados y facturados.
 
 ```sql
 SELECT
@@ -76,35 +76,35 @@ LEFT JOIN portfolio_control_result r
   ON r.line_id = l.line_id;
 ```
 
-![Ejemplo sint?tico de conciliaci?n SQL con m?ltiples tablas](pictures/sql2.PNG)
+![Ejemplo sintético de conciliación SQL con múltiples tablas](pictures/sql2.PNG)
 
-### 2. L?gica de control en ACL Analytics
+### 2. Lógica de control en ACL Analytics
 
 Los controles operativos utilizan scripts ACL para:
 
 - estandarizar cuentas, fechas e importes;
-- crear diferencias y campos de clasificaci?n calculados;
-- generar ?ndices y tablas intermedias;
-- combinar resultados pre y post facturaci?n;
+- crear diferencias y campos de clasificación calculados;
+- generar índices y tablas intermedias;
+- combinar resultados pre y post facturación;
 - resumir montos controlados y excepciones;
 - eliminar temporales antes de nuevas ejecuciones;
 - exportar los libros finales de control.
 
-El archivo p?blico [`acl/financial_control_coverage.acl`](acl/financial_control_coverage.acl) es un ejemplo representativo reducido. Conserva el patr?n del control sin exponer c?digo productivo ni conexiones.
+El archivo público [`acl/financial_control_coverage.acl`](acl/financial_control_coverage.acl) es un ejemplo representativo reducido. Conserva el patrón del control sin exponer código productivo ni conexiones.
 
-### 3. Conciliaci?n y clasificaci?n de excepciones
+### 3. Conciliación y clasificación de excepciones
 
-Las reglas t?picas clasifican casos como:
+Las reglas típicas clasifican casos como:
 
-- inscripto sin facturaci?n;
-- facturado sin inscripci?n relacionada;
-- facturaci?n anterior o posterior al per?odo esperado;
+- inscripto sin facturación;
+- facturado sin inscripción relacionada;
+- facturación anterior o posterior al período esperado;
 - pagos de contado o ajustes manuales;
 - becas o descuentos fuera de vigencia;
-- diferencia entre descuento te?rico y aplicado;
-- situaciones de bajo volumen que requieren revisi?n manual.
+- diferencia entre descuento teórico y aplicado;
+- situaciones de bajo volumen que requieren revisión manual.
 
-![Control sint?tico de facturaci?n esperada versus real](pictures/check_masiva.PNG)
+![Control sintético de facturación esperada versus real](pictures/check_masiva.PNG)
 
 ## Contenido representativo
 
@@ -133,29 +133,29 @@ Las reglas t?picas clasifican casos como:
 
 ## Resultados demostrados
 
-- Aproximadamente **98% del valor econ?mico facturado mensualmente** cubierto por controles fuertes dentro del alcance definido.
-- Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente **5 GB** mediante ACL y fuentes Oracle; era una escala m?xima demostrada, no el tama?o habitual de todos los controles.
-- Clasificaci?n repetible de diferencias antes de la gesti?n de cobranzas.
-- An?lisis manual concentrado en una poblaci?n menor de excepciones.
-- Controles reutilizables por mes y per?odo acad?mico con mantenimiento reducido.
+- Aproximadamente **98% del valor económico facturado mensualmente** cubierto por controles fuertes dentro del alcance definido.
+- Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente **5 GB** mediante ACL y fuentes Oracle; era una escala máxima demostrada, no el tamaño habitual de todos los controles.
+- Clasificación repetible de diferencias antes de la gestión de cobranzas.
+- Análisis manual concentrado en una población menor de excepciones.
+- Controles reutilizables por mes y período académico con mantenimiento reducido.
 
-## C?mo reproducir el ejemplo sint?tico
+## Cómo reproducir el ejemplo sintético
 
-1. Ejecutar los scripts de `sql/` en orden num?rico dentro de un ambiente Oracle de desarrollo.
+1. Ejecutar los scripts de `sql/` en orden numérico dentro de un ambiente Oracle de desarrollo.
 2. Confirmar que `03_financial_control_coverage.sql` devuelve 98%.
 3. Revisar el mismo universo en `data/synthetic_billing_control.csv`.
 4. Si se dispone de ACL Analytics, adaptar el script representativo a una tabla importada con los mismos campos.
 
-El ejemplo SQL es autocontenido y utiliza ?nicamente tablas ficticias del portfolio. ACL Analytics es software comercial; por eso el script se ofrece como patr?n legible y no como una prueba automatizada de CI.
+El ejemplo SQL es autocontenido y utiliza únicamente tablas ficticias del portfolio. ACL Analytics es software comercial; por eso el script se ofrece como patrón legible y no como una prueba automatizada de CI.
 
 ## Confidencialidad y seguridad
 
-- No se incluye informaci?n real de estudiantes, clientes ni empleados.
-- No se incluyen tablas productivas, servidores, DSN, correos, contrase?as ni cadenas de conexi?n.
-- Los valores monetarios e identificadores son sint?ticos.
-- Los scripts p?blicos reproducen el patr?n t?cnico, no la implementaci?n productiva.
-- Las capturas se conservan ?nicamente cuando contienen informaci?n ficticia o sanitizada.
+- No se incluye información real de estudiantes, clientes ni empleados.
+- No se incluyen tablas productivas, servidores, DSN, correos, contraseñas ni cadenas de conexión.
+- Los valores monetarios e identificadores son sintéticos.
+- Los scripts públicos reproducen el patrón técnico, no la implementación productiva.
+- Las capturas se conservan únicamente cuando contienen información ficticia o sanitizada.
 
 ## Resumen profesional
 
-> Desarroll? controles automatizados de facturaci?n utilizando ACL Analytics y Oracle SQL. SQL extra?a y combinaba informaci?n de inscripciones, facturaci?n, becas, descuentos y ajustes; ACL estandarizaba campos, aplicaba reglas de negocio, conciliaba importes esperados contra reales y clasificaba excepciones. Cada mes, los controles alcanzaban aproximadamente el 98% del valor total facturado dentro del alcance definido, permitiendo concentrar la revisi?n manual en los conceptos excepcionales restantes. Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente 5 GB y generaban reportes de control repetibles en Excel antes de la gesti?n de cobranzas.
+> Desarrollé controles automatizados de facturación utilizando ACL Analytics y Oracle SQL. SQL extraía y combinaba información de inscripciones, facturación, becas, descuentos y ajustes; ACL estandarizaba campos, aplicaba reglas de negocio, conciliaba importes esperados contra reales y clasificaba excepciones. Cada mes, los controles alcanzaban aproximadamente el 98% del valor total facturado dentro del alcance definido, permitiendo concentrar la revisión manual en los conceptos excepcionales restantes. Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente 5 GB y generaban reportes de control repetibles en Excel antes de la gestión de cobranzas.
