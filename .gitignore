@@ -1,0 +1,25 @@
+# ACL generated data, indexes, projects, and execution logs
+*.fil
+*.inx
+*.lix
+*.log
+*.ac
+
+# Real operational exports
+*.xlsx
+*.xls
+data/raw/
+data/private/
+
+# Connections and credentials
+.env
+*.dsn
+*credential*
+*password*
+*secret*
+*connection*.txt
+*odbc*.txt
+
+# Local system files
+.DS_Store
+Thumbs.db

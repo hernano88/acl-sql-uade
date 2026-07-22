@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic financial control coverage example</title>
+  <desc id="desc">Ninety-eight percent of billed value is covered by strong automated controls and two percent is routed to manual review.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="controlled" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#020617" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="520" rx="28" fill="url(#background)"/>
+  <text x="70" y="78" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">
+    Financial control coverage
+  </text>
+  <text x="70" y="117" fill="#94a3b8" font-family="Segoe UI, Arial, sans-serif" font-size="20">
+    Synthetic monthly example ? coverage is measured by billed value
+  </text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="164" width="1060" height="118" rx="20" fill="#e2e8f0"/>
+    <rect x="70" y="164" width="1039" height="118" rx="20" fill="url(#controlled)"/>
+    <path d="M1089 164 H1110 A20 20 0 0 1 1130 184 V262 A20 20 0 0 1 1110 282 H1089 Z" fill="#fb923c"/>
+  </g>
+
+  <text x="96" y="228" fill="#052e16" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="800">98%</text>
+  <text x="205" y="224" fill="#052e16" font-family="Segoe UI, Arial, sans-serif" font-size="23" font-weight="600">
+    billed value covered by strong automated controls
+  </text>
+  <text x="1109" y="226" fill="#431407" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="800">2%</text>
+
+  <g transform="translate(70 332)">
+    <rect width="510" height="120" rx="18" fill="#ffffff" fill-opacity="0.08" stroke="#334155"/>
+    <circle cx="38" cy="38" r="9" fill="#22c55e"/>
+    <text x="60" y="45" fill="#e2e8f0" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="650">Controlled billed amount</text>
+    <text x="38" y="91" fill="#f8fafc" font-family="Consolas, monospace" font-size="27" font-weight="700">98,000 / 100,000</text>
+  </g>
+
+  <g transform="translate(620 332)">
+    <rect width="510" height="120" rx="18" fill="#ffffff" fill-opacity="0.08" stroke="#334155"/>
+    <circle cx="38" cy="38" r="9" fill="#fb923c"/>
+    <text x="60" y="45" fill="#e2e8f0" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="650">Exception population</text>
+    <text x="38" y="91" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="700">Manual review of remaining value</text>
+  </g>
+
+  <text x="600" y="491" text-anchor="middle" fill="#64748b" font-family="Segoe UI, Arial, sans-serif" font-size="16">
+    Values and identifiers are fictitious and included only to explain the KPI.
+  </text>
+</svg>
