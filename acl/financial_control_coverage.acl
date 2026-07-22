@@ -1,0 +1,34 @@
+COMMENT
+// REPRESENTATIVE PUBLIC ACL ANALYTICS SCRIPT
+// Uses synthetic fields and contains no production connection information.
+
+SET SAFETY OFF
+
+COMMENT --- Open the synthetic table imported from the public CSV or SQL result
+OPEN synthetic_billing_control
+
+COMMENT --- Normalize values used by the financial coverage control
+DEFINE FIELD controlled_amount COMPUTED IF(
+    strong_control_flag = "Y";
+    billed_amount;
+    0
+)
+
+DEFINE FIELD amount_difference COMPUTED billed_amount - expected_amount
+
+COMMENT --- Summarize billed and controlled value by period
+SUMMARIZE ON billing_period SUBTOTAL billed_amount controlled_amount TO "financial_coverage_by_period.FIL" PRESORT OPEN
+
+DEFINE FIELD financial_control_coverage_pct COMPUTED ROUND(
+    controlled_amount / billed_amount * 100;
+    2
+)
+
+COMMENT --- Isolate the population that remains outside strong automated controls
+OPEN synthetic_billing_control
+EXTRACT FIELDS billing_period account_ref concept_code billed_amount control_status exception_reason IF strong_control_flag = "N" TO "manual_review_exceptions.FIL" OPEN
+
+COMMENT --- Export the synthetic control result for business review
+EXPORT FIELDS ALL TO "financial_control_summary.xlsx" XLSX OVERWRITE
+
+SET SAFETY ON
