@@ -33,3 +33,28 @@ The use of absolute values makes the denominator explicit if a future synthetic 
 ## Confidentiality boundary
 
 The field names are generic and do not reproduce a production schema. Production identifiers, institution-specific concept codes, connection parameters, and personal attributes are excluded.
+
+## Python/Jupyter reconciliation fixtures
+
+The migration example intentionally splits the control into two independent universes so it can demonstrate a bidirectional reconciliation.
+
+### `synthetic_expected_scope.csv`
+
+| Field | Type | Description |
+|---|---|---|
+| `billing_period` | `YYYY-MM` | Fictitious execution period. |
+| `account_ref` | string | Synthetic account key used for reconciliation. |
+| `expected_line_count` | integer | Number of expected billing lines for the account. |
+| `expected_amount` | decimal | Expected account-level amount. |
+
+### `synthetic_billed_scope.csv`
+
+| Field | Type | Description |
+|---|---|---|
+| `billing_period` | `YYYY-MM` | Fictitious execution period. |
+| `account_ref` | string | Synthetic account key used for reconciliation. |
+| `billed_line_count` | integer | Number of billing lines contributed by the row. |
+| `billed_amount` | decimal | Amount contributed by the row. |
+| `justification_type` | string | Generic justification category or `NONE`. |
+
+The fixture deliberately has equal expected and actual total line counts while containing one missing and one unexpected account. This proves why the account-level full outer join is required in addition to total checks.

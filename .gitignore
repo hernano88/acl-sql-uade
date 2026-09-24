@@ -10,6 +10,9 @@
 *.xls
 data/raw/
 data/private/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
 
 # Connections and credentials
 .env
@@ -19,6 +22,7 @@ data/private/
 *secret*
 *connection*.txt
 *odbc*.txt
+config_db*.py
 
 # Local system files
 .DS_Store

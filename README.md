@@ -1,10 +1,12 @@
-# Financial Billing Reconciliation with ACL Analytics and Oracle SQL
+# Financial Controls: From ACL and Oracle SQL to Python/Jupyter
 
 [English](README.md) | [Español](README.es.md)
 
-A professional data-control case study based on automated billing reconciliation work. The solution combines Oracle SQL for extracting and shaping operational data, ACL Analytics for repeatable control rules, and Excel outputs for business review and exception management.
+A professional data-control case study based on automated billing reconciliation work. The original solution combines Oracle SQL, ACL Analytics, and Excel; its current evolution migrates selected controls to **Python, Jupyter Notebook, and Pandas**, while retaining Oracle as the source and making validations, justifications, and exceptions explicit.
 
 All public code, data, identifiers, and screenshots are synthetic or sanitized. Production scripts, connection details, student information, and internal database objects are intentionally excluded.
+
+> **Current work status:** the ACL-to-Python/Jupyter migration is underway in a professional environment. The public example reproduces the technical approach with fictitious data. Historical result persistence in Oracle is being designed collaboratively with BI and is not presented as production-ready.
 
 ## Business problem
 
@@ -33,6 +35,39 @@ flowchart LR
 ```
 
 Oracle SQL and ACL have different responsibilities: SQL builds the required data scope close to the source, while ACL standardizes fields, combines extracts, evaluates business rules, summarizes results, and exports the control report.
+
+## Current evolution: ACL → Python/Jupyter
+
+```mermaid
+flowchart LR
+    A["Authorized Oracle sources"] --> B["Parameterized SQL"]
+    B --> C["Pandas DataFrames"]
+    C --> D["Normalization and aggregation"]
+    D --> E["Bidirectional account reconciliation"]
+    E --> F["Business-rule justifications"]
+    F --> G["Pending items + line and amount checks"]
+    G --> H["Jupyter HTML dashboard"]
+    H -. "in design with BI" .-> I["Oracle result history"]
+```
+
+The new pattern preserves the business knowledge embedded in the existing controls while improving technical traceability:
+
+- authorized Oracle access through `oracledb` and SQLAlchemy;
+- SQL extraction into DataFrames without storing credentials in notebooks;
+- identifier, null, date, and type normalization;
+- account-level aggregation and reconciliation with `groupby()` and `merge(..., how="outer")`;
+- difference detection in both directions;
+- automatic justifications that do not hide the original difference;
+- combined validation of line counts, amounts, and pending cases;
+- a compact HTML dashboard inside Jupyter.
+
+The public notebook [`python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb`](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb) runs the pattern end to end with synthetic data. Reusable logic lives in [`python_jupyter/src/control_reconciliation.py`](python_jupyter/src/control_reconciliation.py) and is covered by automated tests.
+
+### Demonstrated control decision
+
+The fixture contains 10 expected lines and 10 billed lines in total. Even so, one expected account has no billing and one unexpected account was billed. Comparing only grand totals would therefore produce a false pass; the account-level outer merge prevents opposite differences from cancelling each other out.
+
+Justified cases remain visible as `JUSTIFIED`, while cases that do not close both count and amount checks stay as `PENDING_REVIEW`. This distinction makes it possible to explain what an automated rule resolved and what still requires human analysis.
 
 ## Main KPI: monthly financial control coverage
 
@@ -113,7 +148,9 @@ Typical rules classify cases such as:
 |-- acl/
 |   `-- financial_control_coverage.acl
 |-- data/
-|   `-- synthetic_billing_control.csv
+|   |-- synthetic_billing_control.csv
+|   |-- synthetic_billed_scope.csv
+|   `-- synthetic_expected_scope.csv
 |-- docs/
 |   |-- DATA_DICTIONARY.md
 |   `-- images/
@@ -121,12 +158,22 @@ Typical rules classify cases such as:
 |       `-- financial-control-coverage.svg
 |-- pictures/
 |   `-- sanitized screenshots
+|-- python_jupyter/
+|   |-- notebooks/
+|   |   `-- 01_synthetic_billing_reconciliation.ipynb
+|   |-- src/
+|   |   `-- control_reconciliation.py
+|   |-- .env.example
+|   |-- oracle_connection.example.py
+|   `-- requirements.txt
 |-- sql/
 |   |-- 00_create_synthetic_tables.sql
 |   |-- 01_extract_control_scope.sql
 |   |-- 02_reconcile_expected_actual.sql
 |   |-- 03_financial_control_coverage.sql
 |   `-- 04_data_quality_checks.sql
+|-- tests/
+|   `-- test_python_reconciliation.py
 |-- README.md
 `-- README.es.md
 ```
@@ -138,6 +185,7 @@ Typical rules classify cases such as:
 - Repeatable classification of differences before downstream collection activities.
 - Manual analysis focused on a smaller exception population instead of the complete billing universe.
 - Reusable monthly and academic-period controls with reduced maintenance.
+- Progressive migration of selected controls from ACL to Python/Jupyter, with Pandas reconciliations and more traceable review outputs.
 
 ## Reproducing the synthetic example
 
@@ -145,6 +193,16 @@ Typical rules classify cases such as:
 2. Confirm that `03_financial_control_coverage.sql` returns 98% for the included data.
 3. Review the same input in `data/synthetic_billing_control.csv`.
 4. If ACL Analytics is available, adapt the representative script to an imported table with the same fields.
+
+To run the Python/Jupyter demonstration:
+
+```powershell
+python -m pip install -r python_jupyter/requirements.txt
+python -m pytest
+jupyter lab python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb
+```
+
+The `oracle_connection.example.py` file is a secure template only: it relies on environment variables and fictitious view names. It is not a copy of the production connection.
 
 The SQL example is self-contained and uses only synthetic portfolio tables. ACL Analytics is commercial software, so the ACL script is provided as a readable implementation pattern rather than an automated CI test.
 
@@ -155,7 +213,8 @@ The SQL example is self-contained and uses only synthetic portfolio tables. ACL 
 - Monetary values and identifiers are synthetic.
 - Public scripts reproduce the technical pattern, not the production implementation.
 - Screenshots are retained only when they contain sanitized or fictitious information.
+- Production notebooks are not published: they may expose internal names, queries, results, or configuration references even when passwords live elsewhere.
 
 ## Professional summary
 
-> I developed automated billing controls using ACL Analytics and Oracle SQL. SQL extracted and combined enrollment, billing, scholarship, discount, and adjustment data, while ACL standardized fields, applied business rules, reconciled expected versus actual amounts, and classified exceptions. Each month, the controls covered approximately 98% of total billed value within the defined scope, allowing manual review to focus on the remaining exceptional concepts. The most data-intensive controls processed datasets reaching approximately 5 GB and produced repeatable Excel control reports before collection activities.
+> I developed automated billing controls using ACL Analytics and Oracle SQL, and I am currently migrating selected controls to Python and Jupyter Notebook. With Pandas, I extract and normalize Oracle data, reconcile account-level universes in both directions, apply business justifications, and validate both line counts and monetary amounts. The existing controls cover approximately 98% of monthly billed value within the defined scope, and the most data-intensive cases processed datasets of up to approximately 5 GB. The Python evolution preserves that control knowledge while improving traceability, reuse, and future historical persistence in collaboration with BI.
