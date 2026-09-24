@@ -1,10 +1,12 @@
-# Conciliación financiera de facturación con ACL Analytics y Oracle SQL
+# Controles financieros: de ACL y Oracle SQL a Python/Jupyter
 
 [English](README.md) | [Español](README.es.md)
 
-Caso profesional de control de datos basado en la automatización de conciliaciones de facturación. La solución combina Oracle SQL para extraer y preparar información operativa, ACL Analytics para ejecutar reglas de control repetibles y Excel para la revisión de resultados y gestión de excepciones.
+Caso profesional de control de datos basado en la automatización de conciliaciones de facturación. La solución original combina Oracle SQL, ACL Analytics y Excel; su evolución actual migra controles seleccionados a **Python, Jupyter Notebook y Pandas**, manteniendo Oracle como fuente y haciendo explícitas las validaciones, justificaciones y excepciones.
 
 Todo el código, los datos, los identificadores y las capturas públicas son sintéticos o fueron sanitizados. Se excluyen deliberadamente scripts productivos, conexiones, información de estudiantes y objetos internos de base de datos.
+
+> **Estado real del trabajo:** la migración ACL → Python/Jupyter está en curso en un entorno profesional. El ejemplo público reproduce el enfoque técnico con datos ficticios. La persistencia histórica de resultados en Oracle se encuentra en diseño conjunto con BI y no se presenta como productiva.
 
 ## Problema de negocio
 
@@ -33,6 +35,39 @@ flowchart LR
 ```
 
 Oracle SQL y ACL cumplen responsabilidades diferentes: SQL construye el universo de datos cerca de la fuente; ACL estandariza campos, combina extracciones, evalúa reglas, resume resultados y exporta el reporte de control.
+
+## Evolución actual: ACL → Python/Jupyter
+
+```mermaid
+flowchart LR
+    A["Fuentes autorizadas Oracle"] --> B["SQL parametrizado"]
+    B --> C["DataFrames de Pandas"]
+    C --> D["Normalización y agregación"]
+    D --> E["Conciliación bidireccional por cuenta"]
+    E --> F["Justificaciones por reglas de negocio"]
+    F --> G["Pendientes + controles de líneas e importes"]
+    G --> H["Dashboard HTML en Jupyter"]
+    H -. "en diseño con BI" .-> I["Histórico de resultados en Oracle"]
+```
+
+El nuevo patrón conserva el conocimiento de negocio de los controles existentes y mejora su trazabilidad técnica:
+
+- conexión autorizada a Oracle con `oracledb` y SQLAlchemy;
+- extracción SQL a DataFrames sin guardar credenciales en el notebook;
+- normalización de identificadores, nulos, fechas y tipos;
+- agregaciones y conciliación por cuenta mediante `groupby()` y `merge(..., how="outer")`;
+- detección de diferencias en ambas direcciones;
+- justificaciones automáticas sin ocultar la diferencia original;
+- validación conjunta de cantidad de líneas, importes y casos pendientes;
+- salida resumida como dashboard HTML dentro de Jupyter.
+
+El notebook público [`python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb`](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb) ejecuta ese flujo de punta a punta con datos sintéticos. La lógica reutilizable está separada en [`python_jupyter/src/control_reconciliation.py`](python_jupyter/src/control_reconciliation.py) y cuenta con pruebas automatizadas.
+
+### Decisión de control demostrada
+
+El ejemplo tiene 10 líneas esperadas y 10 líneas facturadas en total. Sin embargo, existe una cuenta esperada sin facturación y otra facturada sin registro esperado. Por eso no alcanza con comparar totales generales: el `outer merge` por cuenta evita que dos diferencias opuestas se compensen y produzcan un falso resultado correcto.
+
+Los casos justificados se conservan como `JUSTIFIED`; los que no cierran cantidad e importe permanecen como `PENDING_REVIEW`. Esta separación permite explicar qué resolvió una regla automática y qué requiere análisis humano.
 
 ## KPI principal: cobertura financiera mensual del control
 
@@ -113,7 +148,9 @@ Las reglas típicas clasifican casos como:
 |-- acl/
 |   `-- financial_control_coverage.acl
 |-- data/
-|   `-- synthetic_billing_control.csv
+|   |-- synthetic_billing_control.csv
+|   |-- synthetic_billed_scope.csv
+|   `-- synthetic_expected_scope.csv
 |-- docs/
 |   |-- DATA_DICTIONARY.md
 |   `-- images/
@@ -121,12 +158,22 @@ Las reglas típicas clasifican casos como:
 |       `-- financial-control-coverage.svg
 |-- pictures/
 |   `-- capturas sanitizadas
+|-- python_jupyter/
+|   |-- notebooks/
+|   |   `-- 01_synthetic_billing_reconciliation.ipynb
+|   |-- src/
+|   |   `-- control_reconciliation.py
+|   |-- .env.example
+|   |-- oracle_connection.example.py
+|   `-- requirements.txt
 |-- sql/
 |   |-- 00_create_synthetic_tables.sql
 |   |-- 01_extract_control_scope.sql
 |   |-- 02_reconcile_expected_actual.sql
 |   |-- 03_financial_control_coverage.sql
 |   `-- 04_data_quality_checks.sql
+|-- tests/
+|   `-- test_python_reconciliation.py
 |-- README.md
 `-- README.es.md
 ```
@@ -138,6 +185,7 @@ Las reglas típicas clasifican casos como:
 - Clasificación repetible de diferencias antes de la gestión de cobranzas.
 - Análisis manual concentrado en una población menor de excepciones.
 - Controles reutilizables por mes y período académico con mantenimiento reducido.
+- Migración progresiva de controles seleccionados desde ACL hacia Python/Jupyter, con conciliaciones en Pandas y salidas de revisión más trazables.
 
 ## Cómo reproducir el ejemplo sintético
 
@@ -145,6 +193,16 @@ Las reglas típicas clasifican casos como:
 2. Confirmar que `03_financial_control_coverage.sql` devuelve 98%.
 3. Revisar el mismo universo en `data/synthetic_billing_control.csv`.
 4. Si se dispone de ACL Analytics, adaptar el script representativo a una tabla importada con los mismos campos.
+
+Para ejecutar la demostración Python/Jupyter:
+
+```powershell
+python -m pip install -r python_jupyter/requirements.txt
+python -m pytest
+jupyter lab python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb
+```
+
+El archivo `oracle_connection.example.py` es únicamente una plantilla segura: usa variables de entorno y nombres de vistas ficticios. No es una copia de la conexión productiva.
 
 El ejemplo SQL es autocontenido y utiliza únicamente tablas ficticias del portfolio. ACL Analytics es software comercial; por eso el script se ofrece como patrón legible y no como una prueba automatizada de CI.
 
@@ -155,7 +213,8 @@ El ejemplo SQL es autocontenido y utiliza únicamente tablas ficticias del portf
 - Los valores monetarios e identificadores son sintéticos.
 - Los scripts públicos reproducen el patrón técnico, no la implementación productiva.
 - Las capturas se conservan únicamente cuando contienen información ficticia o sanitizada.
+- Los notebooks productivos no se publican: pueden contener nombres internos, consultas, resultados o referencias de configuración aun cuando la contraseña esté en otro archivo.
 
 ## Resumen profesional
 
-> Desarrollé controles automatizados de facturación utilizando ACL Analytics y Oracle SQL. SQL extraía y combinaba información de inscripciones, facturación, becas, descuentos y ajustes; ACL estandarizaba campos, aplicaba reglas de negocio, conciliaba importes esperados contra reales y clasificaba excepciones. Cada mes, los controles alcanzaban aproximadamente el 98% del valor total facturado dentro del alcance definido, permitiendo concentrar la revisión manual en los conceptos excepcionales restantes. Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente 5 GB y generaban reportes de control repetibles en Excel antes de la gestión de cobranzas.
+> Desarrollé controles automatizados de facturación con ACL Analytics y Oracle SQL, y actualmente migro controles seleccionados a Python y Jupyter Notebook. Con Pandas extraigo y normalizo datos de Oracle, concilio universos por cuenta en ambas direcciones, aplico justificaciones de negocio y valido tanto cantidades de líneas como importes. Los controles existentes alcanzan mensualmente aproximadamente el 98% del valor facturado dentro del alcance definido; los de mayor intensidad procesaron datasets de hasta aproximadamente 5 GB. La evolución a Python busca conservar ese conocimiento de control y mejorar la trazabilidad, la reutilización y la futura persistencia histórica junto con BI.

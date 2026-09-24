@@ -1,0 +1,7 @@
+billing_period,account_ref,expected_line_count,expected_amount
+2026-01,ACC-1001,2,20000
+2026-01,ACC-1002,3,30000
+2026-01,ACC-1003,1,12000
+2026-01,ACC-1004,2,18000
+2026-01,ACC-1005,1,10000
+2026-01,ACC-1006,1,8000
