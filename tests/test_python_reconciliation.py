@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from python_jupyter.src.control_reconciliation import (
+from legacy.python_jupyter.src.control_reconciliation import (
     build_control_kpis,
     reconcile_scopes,
 )
@@ -12,8 +12,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_control():
-    expected = pd.read_csv(REPO_ROOT / "data" / "synthetic_expected_scope.csv")
-    billed = pd.read_csv(REPO_ROOT / "data" / "synthetic_billed_scope.csv")
+    expected = pd.read_csv(REPO_ROOT / "legacy" / "data" / "synthetic_expected_scope.csv")
+    billed = pd.read_csv(REPO_ROOT / "legacy" / "data" / "synthetic_billed_scope.csv")
     return reconcile_scopes(expected, billed)
 
 

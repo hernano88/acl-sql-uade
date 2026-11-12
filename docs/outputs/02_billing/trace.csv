@@ -1,0 +1,10 @@
+stage,rows,check
+scope.assigned,9,validated_keys_and_row_ids; excluded_rows=0
+scope.billed,9,validated_keys_and_row_ids; excluded_rows=0
+input_contract,18,integer_measures;critical_keys;nonnegative_counts
+aggregate.expected,6,unique_student_program
+aggregate.actual,6,unique_student_program
+join.outer,7,one_to_one;both_universes_preserved
+classify,7,original_differences_preserved
+allocate_evidence,2,unique_evidence;capacity_capped;direction_checked
+totals_bridge,7,PASS

@@ -1,220 +1,134 @@
-# Controles financieros: de ACL y Oracle SQL a Python/Jupyter
+# Controles financieros · Python, Pandas y Oracle SQL
 
-[English](README.md) | [Español](README.es.md)
+[English](README.md) · [Recorrido de un minuto](docs/portfolio_walkthrough.es.md) · [Profundización técnica](docs/interview_deep_dive.es.md)
 
-Caso profesional de control de datos basado en la automatización de conciliaciones de facturación. La solución original combina Oracle SQL, ACL Analytics y Excel; su evolución actual migra controles seleccionados a **Python, Jupyter Notebook y Pandas**, manteniendo Oracle como fuente y haciendo explícitas las validaciones, justificaciones y excepciones.
+**Tres flujos de control financiero reconstruidos desde notebooks de trabajo profesional en un proyecto Python reproducible y completamente sintético.**
 
-Todo el código, los datos, los identificadores y las capturas públicas son sintéticos o fueron sanitizados. Se excluyen deliberadamente scripts productivos, conexiones, información de estudiantes y objetos internos de base de datos.
+El proyecto conecta inscripciones académicas, conceptos asignados a facturación, movimientos
+facturados y elegibilidad de becas. Convierte cada diferencia en un resultado revisable:
+discrepancia original, evidencia que la explica, remanente pendiente y conciliación con los totales de origen.
 
-> **Estado real del trabajo:** la migración ACL → Python/Jupyter está en curso en un entorno profesional. El ejemplo público reproduce el enfoque técnico con datos ficticios. La persistencia histórica de resultados en Oracle se encuentra en diseño conjunto con BI y no se presenta como productiva.
+![Los tres controles y sus resultados sintéticos](docs/images/control-overview.svg)
 
-## Problema de negocio
+## Tres controles, un motor compartido
 
-La facturación masiva combina inscripciones, aranceles, becas, descuentos, bajas y ajustes especiales. La información puede diferir entre reportes operativos y fuentes de base de datos. Una comparación manual es lenta, difícil de repetir y puede omitir excepciones de baja frecuencia.
+| Caso de estudio | Qué verifica | Un resultado que merece revisión |
+|---|---|---|
+| **[01 · Inscripciones → asignado a facturación](docs/cases/01_enrollment.es.md)** | Consistencia entre actividad académica y preparación de facturación | 10 líneas de inscripción frente a 9 asignadas; los excesos y faltantes permanecen visibles |
+| **[02 · Asignado → movimientos facturados](docs/cases/02_billing.es.md)** | Integridad de cantidades e importes facturados | Ambas fuentes tienen 9 líneas, pero difieren en −40,00 y quedan dos casos por clave pendientes |
+| **[03 · Beca teórica → beca aplicada](docs/cases/03_scholarship.es.md)** | Aplicación y atribución del beneficio | 45,00 teóricos frente a 65,00 aplicados; 3,00 no tienen carrera y no deben duplicarse |
 
-El esquema de control fue diseñado para:
+**Son resultados de datos ficticios, no KPI productivos ni ahorros medidos.**
+El aporte de ingeniería es hacer explícitos el alcance, los joins, los límites de las
+justificaciones y la conciliación independiente. Cada caso tiene página bilingüe, notebook
+ejecutado, vista de resultados y exportaciones para revisión.
 
-- comparar facturación esperada y real;
-- conciliar inscripciones y movimientos financieros;
-- aplicar reglas de negocio de forma consistente;
-- clasificar diferencias justificables;
-- aislar excepciones antes de la gestión de cobranzas;
-- medir cuánto valor económico está protegido por controles fuertes.
+## Arquitectura de punta a punta
 
-## Flujo implementado
-
-```mermaid
-flowchart LR
-    A["Fuentes operativas Oracle"] --> B["Extracción con Oracle SQL"]
-    B --> C["Normalización y joins en ACL"]
-    C --> D["Reglas de validación"]
-    D --> E["Conciliación esperado vs. real"]
-    E --> F["Diferencias clasificadas"]
-    F --> G["Reporte de control en Excel"]
-    G --> H["Revisión manual de excepciones"]
-```
-
-Oracle SQL y ACL cumplen responsabilidades diferentes: SQL construye el universo de datos cerca de la fuente; ACL estandariza campos, combina extracciones, evalúa reglas, resume resultados y exporta el reporte de control.
-
-## Evolución actual: ACL → Python/Jupyter
+![Arquitectura desde Oracle o fixtures hasta revisión](docs/images/architecture.svg)
 
 ```mermaid
 flowchart LR
-    A["Fuentes autorizadas Oracle"] --> B["SQL parametrizado"]
-    B --> C["DataFrames de Pandas"]
-    C --> D["Normalización y agregación"]
-    D --> E["Conciliación bidireccional por cuenta"]
-    E --> F["Justificaciones por reglas de negocio"]
-    F --> G["Pendientes + controles de líneas e importes"]
-    G --> H["Dashboard HTML en Jupyter"]
-    H -. "en diseño con BI" .-> I["Histórico de resultados en Oracle"]
+    O["Oracle · ejemplo opcional"] --> X["Período enlazado / configuración externa"]
+    X --> V["Contratos de entrada"]
+    S["CSV sintéticos locales"] --> V
+    V --> P["Pandas · alcance / normalización / agregación"]
+    P --> R["Motor reusable de conciliación"]
+    R --> J["Justificaciones + pendientes"]
+    J --> T["Puente origen / detalle / no asignado"]
+    T --> D["Dashboard / CSV / JSON / trazabilidad"]
 ```
 
-El nuevo patrón conserva el conocimiento de negocio de los controles existentes y mejora su trazabilidad técnica:
+La ejecución predeterminada es local. La [plantilla Oracle](examples/oracle_connection.py)
+no conecta al importarse, usa configuración externa y parámetros enlazados, y consulta vistas
+ficticias. Es un contrato de integración de ejemplo, no un despliegue validado.
 
-- conexión autorizada a Oracle con `oracledb` y SQLAlchemy;
-- extracción SQL a DataFrames sin guardar credenciales en el notebook;
-- normalización de identificadores, nulos, fechas y tipos;
-- agregaciones y conciliación por cuenta mediante `groupby()` y `merge(..., how="outer")`;
-- detección de diferencias en ambas direcciones;
-- justificaciones automáticas sin ocultar la diferencia original;
-- validación conjunta de cantidad de líneas, importes y casos pendientes;
-- salida resumida como dashboard HTML dentro de Jupyter.
+## Matriz comparativa de controles
 
-El notebook público [`python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb`](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb) ejecuta ese flujo de punta a punta con datos sintéticos. La lógica reutilizable está separada en [`python_jupyter/src/control_reconciliation.py`](python_jupyter/src/control_reconciliation.py) y cuenta con pruebas automatizadas.
+| Control | Objetivo | Grano / clave tras filtrar período | Relación esperada | Regla principal | Excepciones | Salida de revisión |
+|---|---|---|---|---|---|---|
+| Inscripciones | Explicar cantidades asignadas frente a inscriptas | Alumno + carrera | 1:1 entre resúmenes | Líneas reales − esperadas | Contado; no aranceladas; cuotas previas | Dirección, evidencia consumida y líneas pendientes |
+| Facturación | Conciliar asignado con movimientos facturados | Alumno + carrera | 1:1 entre resúmenes | Cantidades **e** importes a centavos | Ajustes manuales sintéticos; evidencia parcial | Pendientes monetarios y de líneas, netos y absolutos |
+| Becas | Conciliar aplicado con elegibilidad teórica | Alumno + carrera; reglas por carrera | 1:1 entre universos; muchos:1 con reglas | Mínimo y tasa explícitos sobre base facturada | Asignaciones sintéticas; aplicado sin base; falta de carrera | Teórico, aplicado, justificado y registro no asignado |
 
-### Decisión de control demostrada
+Los dos primeros notebooks profesionales agrupaban por alumno: la clave compuesta pública
+es una mejora deliberada. El notebook de becas ya demostraba claves compuestas y cardinalidad
+validada. Ninguna regla ficticia se presenta como política institucional.
 
-El ejemplo tiene 10 líneas esperadas y 10 líneas facturadas en total. Sin embargo, existe una cuenta esperada sin facturación y otra facturada sin registro esperado. Por eso no alcanza con comparar totales generales: el `outer merge` por cuenta evita que dos diferencias opuestas se compensen y produzcan un falso resultado correcto.
+## Decisiones técnicas demostradas
 
-Los casos justificados se conservan como `JUSTIFIED`; los que no cierran cantidad e importe permanecen como `PENDING_REVIEW`. Esta separación permite explicar qué resolvió una regla automática y qué requiere análisis humano.
+- **Contratos antes de comparar:** IDs de fila únicos, claves obligatorias, período explícito y campos Y/N estrictos.
+- **Identificadores estables:** texto normalizado sin perder ceros iniciales; nulos críticos rechazados.
+- **Cardinalidad como control:** cruces outer validados y consulta de reglas muchos-a-uno.
+- **Política monetaria:** ingreso decimal, redondeo half-up, centavos enteros, signos y tolerancia explícitos.
+- **Dos estados:** `OK / DE MÁS / DE MENOS` matemáticos separados de `JUSTIFICADO / PENDIENTE`.
+- **Registro de asignaciones:** cada evidencia se consume una vez y hasta el remanente disponible.
+- **Conservación:** real − esperado = detalle por clave + importe explícitamente no asignado.
+- **Etapas trazables:** cantidades de entrada, exclusiones de alcance, agrupación, joins, evidencias y cuadre; logging opcional de metadatos.
 
-## KPI principal: cobertura financiera mensual del control
+El puente de totales puede conciliar y aun así dejar casos pendientes. Becas demuestra
+esa diferencia en lugar de mostrar un resultado general engañosamente verde.
 
-El resultado aproximado del **98%** es una métrica mensual de cobertura financiera. No es precisión de un pronóstico ni significa que el 98% de las facturas estén libres de errores.
+## Reproducir y revisar
 
-```text
-cobertura financiera del control =
-    monto facturado cubierto por controles fuertes
-    ------------------------------------------------  x 100
-                  monto total facturado
-```
-
-El ejemplo mensual sintético del repositorio utiliza un monto total de 100.000 unidades. Los conceptos alcanzados por controles automatizados fuertes representan 98.000 unidades, lo que produce una cobertura financiera del 98% para ese período de facturación. El 2% restante corresponde a conceptos de menor volumen o situaciones excepcionales enviadas a revisión manual.
-
-![Ejemplo sintético de cobertura financiera del 98 por ciento](docs/images/financial-control-coverage.png)
-
-## Capas de control
-
-### 1. Extracción con Oracle SQL
-
-Las consultas Oracle SQL embebidas seleccionan el período requerido y combinan información de inscripciones, líneas de facturación, conceptos y resultados del control. Las consultas públicas representativas demuestran:
-
-- `INNER JOIN` y `LEFT JOIN` entre múltiples tablas;
-- expresiones comunes de tabla;
-- filtrado y normalización de fechas;
-- tratamiento de nulos con `NVL`;
-- agregaciones por concepto y estado;
-- conciliación entre importes esperados y facturados.
-
-```sql
-SELECT
-    l.account_ref,
-    l.concept_code,
-    l.expected_amount,
-    l.billed_amount,
-    NVL(r.control_status, 'PENDING') AS control_status
-FROM portfolio_billing_line l
-JOIN portfolio_billing_concept c
-  ON c.concept_code = l.concept_code
-LEFT JOIN portfolio_control_result r
-  ON r.line_id = l.line_id;
-```
-
-![Ejemplo sintético de conciliación SQL con múltiples tablas](pictures/sql2.PNG)
-
-### 2. Lógica de control en ACL Analytics
-
-Los controles operativos utilizan scripts ACL para:
-
-- estandarizar cuentas, fechas e importes;
-- crear diferencias y campos de clasificación calculados;
-- generar índices y tablas intermedias;
-- combinar resultados pre y post facturación;
-- resumir montos controlados y excepciones;
-- eliminar temporales antes de nuevas ejecuciones;
-- exportar los libros finales de control.
-
-El archivo público [`acl/financial_control_coverage.acl`](acl/financial_control_coverage.acl) es un ejemplo representativo reducido. Conserva el patrón del control sin exponer código productivo ni conexiones.
-
-### 3. Conciliación y clasificación de excepciones
-
-Las reglas típicas clasifican casos como:
-
-- inscripto sin facturación;
-- facturado sin inscripción relacionada;
-- facturación anterior o posterior al período esperado;
-- pagos de contado o ajustes manuales;
-- becas o descuentos fuera de vigencia;
-- diferencia entre descuento teórico y aplicado;
-- situaciones de bajo volumen que requieren revisión manual.
-
-![Control sintético de facturación esperada versus real](pictures/check_masiva.PNG)
-
-## Contenido representativo
-
-```text
-.
-|-- acl/
-|   `-- financial_control_coverage.acl
-|-- data/
-|   |-- synthetic_billing_control.csv
-|   |-- synthetic_billed_scope.csv
-|   `-- synthetic_expected_scope.csv
-|-- docs/
-|   |-- DATA_DICTIONARY.md
-|   `-- images/
-|       |-- financial-control-coverage.png
-|       `-- financial-control-coverage.svg
-|-- pictures/
-|   `-- capturas sanitizadas
-|-- python_jupyter/
-|   |-- notebooks/
-|   |   `-- 01_synthetic_billing_reconciliation.ipynb
-|   |-- src/
-|   |   `-- control_reconciliation.py
-|   |-- .env.example
-|   |-- oracle_connection.example.py
-|   `-- requirements.txt
-|-- sql/
-|   |-- 00_create_synthetic_tables.sql
-|   |-- 01_extract_control_scope.sql
-|   |-- 02_reconcile_expected_actual.sql
-|   |-- 03_financial_control_coverage.sql
-|   `-- 04_data_quality_checks.sql
-|-- tests/
-|   `-- test_python_reconciliation.py
-|-- README.md
-`-- README.es.md
-```
-
-## Resultados demostrados
-
-- Aproximadamente **98% del valor económico facturado mensualmente** cubierto por controles fuertes dentro del alcance definido.
-- Los controles con mayor intensidad de datos procesaban datasets que alcanzaban aproximadamente **5 GB** mediante ACL y fuentes Oracle; era una escala máxima demostrada, no el tamaño habitual de todos los controles.
-- Clasificación repetible de diferencias antes de la gestión de cobranzas.
-- Análisis manual concentrado en una población menor de excepciones.
-- Controles reutilizables por mes y período académico con mantenimiento reducido.
-- Migración progresiva de controles seleccionados desde ACL hacia Python/Jupyter, con conciliaciones en Pandas y salidas de revisión más trazables.
-
-## Cómo reproducir el ejemplo sintético
-
-1. Ejecutar los scripts de `sql/` en orden numérico dentro de un ambiente Oracle de desarrollo.
-2. Confirmar que `03_financial_control_coverage.sql` devuelve 98%.
-3. Revisar el mismo universo en `data/synthetic_billing_control.csv`.
-4. Si se dispone de ACL Analytics, adaptar el script representativo a una tabla importada con los mismos campos.
-
-Para ejecutar la demostración Python/Jupyter:
+Python 3.11 o superior, desde la raíz:
 
 ```powershell
-python -m pip install -r python_jupyter/requirements.txt
-python -m pytest
-jupyter lab python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb
+python -m venv .venv
+.venv/Scripts/Activate.ps1
+python -m pip install -e ".[dev,notebooks]"
+python -m pytest -q
+python -m financial_controls.demo --period 2030-09 --output artifacts --verbose
+python scripts/run_notebooks.py
+python scripts/build_portfolio_assets.py
+python scripts/check_links.py
+python scripts/scan_public.py
 ```
 
-El archivo `oracle_connection.example.py` es únicamente una plantilla segura: usa variables de entorno y nombres de vistas ficticios. No es una copia de la conexión productiva.
+Los tres [notebooks](notebooks/) incluyen **outputs sintéticos ejecutados** y se pueden leer
+sin iniciar un kernel. El runner genera copias desde kernels nuevos en artifacts; `--publish`
+actualiza los notebooks públicos tras validar los datos ficticios.
+Abrir `artifacts/<caso>/report.html` localmente para ver el dashboard completo.
 
-El ejemplo SQL es autocontenido y utiliza únicamente tablas ficticias del portfolio. ACL Analytics es software comercial; por eso el script se ofrece como patrón legible y no como una prueba automatizada de CI.
+Cada caso exporta `detail.csv`, `summary.csv`, `allocations.csv`, `unassigned.csv`,
+`trace.csv`, `kpis.json` y `report.html`. Las columnas monetarias CSV están en centavos.
+Las [muestras versionadas](docs/outputs/) y los diagramas se regeneran desde las mismas fixtures.
 
-## Confidencialidad y seguridad
+## Calidad, confidencialidad y límites
 
-- No se incluye información real de estudiantes, clientes ni empleados.
-- No se incluyen tablas productivas, servidores, DSN, correos, contraseñas ni cadenas de conexión.
-- Los valores monetarios e identificadores son sintéticos.
-- Los scripts públicos reproducen el patrón técnico, no la implementación productiva.
-- Las capturas se conservan únicamente cuando contienen información ficticia o sanitizada.
-- Los notebooks productivos no se publican: pueden contener nombres internos, consultas, resultados o referencias de configuración aun cuando la contraseña esté en otro archivo.
+Las pruebas incluyen duplicados de eventos/configuración, claves nulas, tipos inválidos,
+centavos, diferencias sólo de cantidad, direcciones contradictorias, justificaciones
+parciales, becas no asignadas, identidades de conciliación y trazabilidad sin datos personales.
+CI también ejecuta notebooks, revisa enlaces y escanea texto público. [Validación](docs/validation.md).
 
-## Resumen profesional
+No se distribuyen notebooks, consultas, conexiones, identificadores, resultados ni capturas
+productivos. Las nuevas filas, reglas, tasas e importes son inventados. El mínimo de dos
+materias y la tasa de 10% son políticas de demostración.
+Ver [seguridad](docs/security.md), [reglas](docs/business_rules.md) y [límites](docs/limitations.md).
 
-> Desarrollé controles automatizados de facturación con ACL Analytics y Oracle SQL, y actualmente migro controles seleccionados a Python y Jupyter Notebook. Con Pandas extraigo y normalizo datos de Oracle, concilio universos por cuenta en ambas direcciones, aplico justificaciones de negocio y valido tanto cantidades de líneas como importes. Los controles existentes alcanzan mensualmente aproximadamente el 98% del valor facturado dentro del alcance definido; los de mayor intensidad procesaron datasets de hasta aproximadamente 5 GB. La evolución a Python busca conservar ese conocimiento de control y mejorar la trazabilidad, la reutilización y la futura persistencia histórica junto con BI.
+## Evidencia del trabajo real vs demostración pública sintética
+
+| Observado en los notebooks profesionales | Reconstrucción pública / ingeniería adicional |
+|---|---|
+| Extracción Oracle, Pandas, agrupaciones, merges y excepciones | Fixtures locales y contrato Oracle sin efectos al importar |
+| Cantidades académicas y conciliación asignado/facturado | Tres casos específicos con un motor compartido |
+| Beca teórica/aplicada, clave compuesta y cardinalidad | Elegibilidad ficticia configurable y registro no asignado |
+| Totales madre/detalle, HTML y una exportación Excel | Puente independiente, asignaciones, resumen, trazas y exportaciones |
+| Código y salidas de ejecuciones guardadas | Tests, kernels nuevos y evidencia visual pública reproducible |
+
+La revisión estática no certificó exactitud productiva, frecuencia, escala ni impacto.
+No se afirma migración completa, histórico productivo, ejecución programada, ahorro medido
+ni seniority de liderazgo.
+
+## Elegir el nivel de lectura
+
+- [Recorrido para recruiters](docs/portfolio_walkthrough.es.md): alcance y tres ejemplos en un minuto.
+- [Profundización para entrevistas](docs/interview_deep_dive.es.md): claves, dinero, evidencia y límites.
+- [Arquitectura](docs/architecture.md) · [Diccionario](docs/synthetic_data_dictionary.md) · [Matriz de controles](docs/control_matrix.md).
+- [Resumen profesional](docs/professional_summary.md): textos defendibles con esta evidencia.
+
+## Evolución del proceso anterior
+
+ACL Analytics fue la herramienta anterior y el origen del conocimiento de control. Scripts,
+capturas y el ejemplo genérico previo se conservan en [legacy/](legacy/README.md) como archivo
+histórico, fuera del recorrido principal del portfolio.

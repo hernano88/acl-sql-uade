@@ -1,3 +1,7 @@
+# Archived dictionary
+
+Historical generic fixtures only. Not the current three-case model.
+
 # Synthetic data dictionary
 
 The public example uses a deliberately small and fictitious dataset. It represents the minimum fields required to explain financial control coverage and exception handling.

@@ -1,0 +1,4 @@
+raw_status,review_status,cases,students,difference_lines,difference_cents,justified_cents,pending_cents
+DE MENOS,PENDIENTE,2,2,-2,-23000,0,-23000
+DE MÁS,JUSTIFICADO,2,2,2,19000,19000,0
+OK,OK,3,2,0,0,0,0

@@ -1,0 +1,15 @@
+stage,rows,check
+scope.enrollments,10,validated_keys_and_row_ids; excluded_rows=0
+scope.billed,9,validated_keys_and_row_ids; excluded_rows=0
+scope.applied,6,validated_keys_and_row_ids; excluded_rows=0
+eligibility.rules,2,many_to_one;no_missing_configuration
+eligibility.theory,6,one_to_one_counts;half_up_rate
+route.unassigned,1,never_distribute_across_programs
+scope.exceptions,2,validated_keys_and_row_ids; excluded_rows=0
+input_contract,11,integer_measures;critical_keys;nonnegative_counts
+aggregate.expected,6,unique_student_program
+aggregate.actual,5,unique_student_program
+join.outer,7,one_to_one;both_universes_preserved
+classify,7,original_differences_preserved
+allocate_evidence,2,unique_evidence;capacity_capped;direction_checked
+totals_bridge,8,PASS
