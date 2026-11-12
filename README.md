@@ -1,220 +1,112 @@
-# Financial Controls: From ACL and Oracle SQL to Python/Jupyter
+# Financial controls with Python, Pandas, Jupyter and Oracle SQL
 
-[English](README.md) | [Español](README.es.md)
+[Español](README.es.md)
 
-A professional data-control case study based on automated billing reconciliation work. The original solution combines Oracle SQL, ACL Analytics, and Excel; its current evolution migrates selected controls to **Python, Jupyter Notebook, and Pandas**, while retaining Oracle as the source and making validations, justifications, and exceptions explicit.
+Three reproducible, **fully synthetic** case studies of financial control modernization.
+The work builds on control knowledge originally implemented with **ACL Analytics and Oracle SQL**.
+Python and Jupyter are the focus of this portfolio; ACL remains available as historical context.
 
-All public code, data, identifiers, and screenshots are synthetic or sanitized. Production scripts, connection details, student information, and internal database objects are intentionally excluded.
+| Case | Question | Measures | Public key |
+|---|---|---|---|
+| [01 — Enrollment vs assigned billing](notebooks/01_enrollment_vs_assigned.ipynb) | Do assigned billing lines match academic enrollment? | Line counts | Student + program |
+| [02 — Assigned vs billed](notebooks/02_assigned_vs_billed.ipynb) | Were assigned concepts actually billed? | Lines + cents | Student + program |
+| [03 — Expected vs applied scholarship](notebooks/03_expected_vs_applied_scholarship.ipynb) | Does the applied benefit match synthetic eligibility? | Cents; enrollment counts as inputs | Student + program |
 
-> **Current work status:** the ACL-to-Python/Jupyter migration is underway in a professional environment. The public example reproduces the technical approach with fictitious data. Historical result persistence in Oracle is being designed collaboratively with BI and is not presented as production-ready.
+The examples deliberately contain unresolved exceptions. A successful **totals bridge** means
+that source totals are accounted for; it does not mean that every transaction is correct.
 
-## Business problem
+## Run locally without Oracle
 
-High-volume billing combines enrollment, tuition, scholarships, discounts, cancellations, and special adjustments. These inputs can disagree across operational reports and database sources. Manual comparison is slow, difficult to repeat, and likely to miss low-frequency exceptions.
+Python 3.11+; commands run from the repository root:
 
-The control framework was designed to:
+```bash
+python -m venv .venv
+# Activate .venv (Windows PowerShell: .venv/Scripts/Activate.ps1)
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e ".[dev,notebooks]"
+python -m pytest -q
+python -m financial_controls.demo --period 2030-09 --output artifacts
+python scripts/run_notebooks.py
+python scripts/scan_public.py
+```
 
-- compare expected and actual billing;
-- reconcile enrollment and financial movements;
-- apply business rules consistently;
-- classify explainable differences;
-- isolate unresolved exceptions before collection activities;
-- measure how much financial value is protected by strong controls.
+Open a notebook with JupyterLab, or review each generated `artifacts/<case>/report.html`.
+Every case exports detail, justification allocations, unassigned rows and KPI JSON.
+Monetary detail fields ending in `cents` are integers, not currency-unit floats.
 
-## Implemented workflow
+## Evidence from real work vs public synthetic demonstration
+
+| Evidence from the reviewed professional notebooks | Public demonstration / engineering improvement |
+|---|---|
+| Oracle extraction into Pandas, grouping and merges | Offline CSV fixtures; optional, inert Oracle connection example |
+| Enrollment and billing quantity comparisons | Composite keys in all three public controls; the first two originals grouped by student |
+| Billing reconciliation of lines and amounts | Shared bidirectional engine with integer-cent contracts |
+| Scholarship theory, applied amount, composite key and merge validation | Configurable **synthetic** minimum and rate; missing configuration fails |
+| Business justifications, pending cases and HTML reports; one Excel export | Explicit capped allocations, portable CSV/HTML outputs |
+| Mother/detail total reconciliation | Independent totals, unassigned bridge, net and absolute residuals |
+| Selected `one_to_one` / `many_to_one` checks in scholarship | Declared cardinality and source-row uniqueness contracts throughout |
+
+The originals are private and are neither distributed nor imported. The audit observed code
+and saved outputs; it did not rerun production processing or independently certify operational
+accuracy, cadence, ownership, scale or impact. This repository does not claim a completed
+migration, scheduled deployment, production history tables, leadership seniority or measured savings.
+Previously described coverage/volume figures are not used as validated outcomes of these three cases.
+
+**All public rules, identifiers, amounts, source names and dates in the new cases are fictitious.**
+The synthetic scholarship uses a minimum of two subjects and a 10% rate solely for demonstration.
+Those values and allowance amounts do not disclose institutional policy.
+See [business rules](docs/business_rules.md) and [limitations](docs/limitations.md).
+
+## Control decisions worth discussing in an interview
+
+- Aggregate at an explicit grain. Equal student totals can hide differences between programs.
+- Normalize strings without converting identifiers to numbers; reject missing keys.
+- Preserve both universes with an outer join; validate one-to-one summarized joins.
+- Read decimal strings, round half-up to cents and perform arithmetic with integers.
+- Keep `raw_status` (`OK`, `DE MÁS`, `DE MENOS`) separate from review status.
+- Cap each justification, retain the original difference and expose partially explained cases.
+- Keep scholarships without a program unassigned; never replicate them across a student's programs.
+- Compare pre-join totals with keyed detail plus explicitly unassigned amounts.
+- Report net and absolute residuals; do not hide offsetting exceptions.
+- Parameterize periods rather than relying on the execution date.
+
+## Architecture and review material
 
 ```mermaid
 flowchart LR
-    A["Oracle operational sources"] --> B["Oracle SQL extraction"]
-    B --> C["ACL normalization and joins"]
-    C --> D["Business validation rules"]
-    D --> E["Expected vs. actual reconciliation"]
-    E --> F["Classified differences"]
-    F --> G["Excel control report"]
-    G --> H["Manual review of exceptions"]
+    A[Synthetic CSV / optional Oracle contract] --> B[Validation and normalization]
+    B --> C[Case-specific eligibility and aggregation]
+    C --> D[Shared full outer reconciliation]
+    D --> E[Capped evidence allocations]
+    E --> F[Detail + pending + unassigned]
+    F --> G[Independent totals bridge]
+    G --> H[HTML / CSV / notebook review]
 ```
 
-Oracle SQL and ACL have different responsibilities: SQL builds the required data scope close to the source, while ACL standardizes fields, combines extracts, evaluates business rules, summarizes results, and exports the control report.
+- [Architecture](docs/architecture.md)
+- [Data dictionary](docs/synthetic_data_dictionary.md)
+- [Control matrix and known results](docs/control_matrix.md)
+- [Business rules and allocation assumptions](docs/business_rules.md)
+- [Security boundary](docs/security.md)
+- [Limitations and roadmap](docs/limitations.md)
+- [Interview and LinkedIn wording](docs/professional_summary.md)
 
-## Current evolution: ACL → Python/Jupyter
+`src/financial_controls/` contains the shared engine and three small control adapters.
+`tests/` covers both the new cases and the earlier public reconciliation example.
+CI runs tests, executes all three notebooks in fresh kernels, generates review reports and scans
+public text. It does not connect to Oracle.
 
-```mermaid
-flowchart LR
-    A["Authorized Oracle sources"] --> B["Parameterized SQL"]
-    B --> C["Pandas DataFrames"]
-    C --> D["Normalization and aggregation"]
-    D --> E["Bidirectional account reconciliation"]
-    E --> F["Business-rule justifications"]
-    F --> G["Pending items + line and amount checks"]
-    G --> H["Jupyter HTML dashboard"]
-    H -. "in design with BI" .-> I["Oracle result history"]
-```
+## Oracle SQL and ACL legacy
 
-The new pattern preserves the business knowledge embedded in the existing controls while improving technical traceability:
+[SQL examples](sql/) and [ACL example](acl/financial_control_coverage.acl) remain available.
+[Composite-grain Oracle SQL](sql/05_synthetic_composite_scope.sql) is a standalone synthetic
+query; Oracle execution is optional and has not been validated by the Python test suite.
 
-- authorized Oracle access through `oracledb` and SQLAlchemy;
-- SQL extraction into DataFrames without storing credentials in notebooks;
-- identifier, null, date, and type normalization;
-- account-level aggregation and reconciliation with `groupby()` and `merge(..., how="outer")`;
-- difference detection in both directions;
-- automatic justifications that do not hide the original difference;
-- combined validation of line counts, amounts, and pending cases;
-- a compact HTML dashboard inside Jupyter.
+The [connection template](python_jupyter/oracle_connection.example.py) reads environment variables
+only inside an explicitly called function. Importing it does not connect. It uses fictitious view
+names and bound period parameters; no real infrastructure is required for the portfolio.
 
-The public notebook [`python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb`](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb) runs the pattern end to end with synthetic data. Reusable logic lives in [`python_jupyter/src/control_reconciliation.py`](python_jupyter/src/control_reconciliation.py) and is covered by automated tests.
-
-### Demonstrated control decision
-
-The fixture contains 10 expected lines and 10 billed lines in total. Even so, one expected account has no billing and one unexpected account was billed. Comparing only grand totals would therefore produce a false pass; the account-level outer merge prevents opposite differences from cancelling each other out.
-
-Justified cases remain visible as `JUSTIFIED`, while cases that do not close both count and amount checks stay as `PENDING_REVIEW`. This distinction makes it possible to explain what an automated rule resolved and what still requires human analysis.
-
-## Main KPI: monthly financial control coverage
-
-The approximately **98%** result is a monthly financial-coverage metric, not prediction accuracy and not a claim that 98% of invoices are error-free.
-
-```text
-financial control coverage =
-    billed amount covered by strong controls
-    -----------------------------------------  x 100
-                total billed amount
-```
-
-The synthetic monthly example included in this repository uses a total billed amount of 100,000 units. Concepts covered by strong automated controls account for 98,000 units, producing 98% financial control coverage for that billing period. The remaining 2% represents lower-volume or exceptional concepts routed to manual review.
-
-![Synthetic example of 98 percent financial control coverage](docs/images/financial-control-coverage.png)
-
-## Control layers
-
-### 1. Oracle SQL extraction
-
-Embedded Oracle SQL queries select the relevant billing period and combine enrollment, billing-line, concept, and control-result data. The representative public queries demonstrate:
-
-- multi-table `INNER JOIN` and `LEFT JOIN` operations;
-- common table expressions;
-- date filtering and normalization;
-- null handling with `NVL`;
-- aggregation by concept and control status;
-- reconciliation of expected and billed amounts.
-
-```sql
-SELECT
-    l.account_ref,
-    l.concept_code,
-    l.expected_amount,
-    l.billed_amount,
-    NVL(r.control_status, 'PENDING') AS control_status
-FROM portfolio_billing_line l
-JOIN portfolio_billing_concept c
-  ON c.concept_code = l.concept_code
-LEFT JOIN portfolio_control_result r
-  ON r.line_id = l.line_id;
-```
-
-![Synthetic example of multi-table SQL reconciliation logic](pictures/sql2.PNG)
-
-### 2. ACL Analytics control logic
-
-The operational controls use ACL scripts to:
-
-- standardize account, date, and amount fields;
-- create calculated differences and classification fields;
-- build indexes and intermediate tables;
-- join pre-billing and post-billing results;
-- summarize controlled amounts and exceptions;
-- delete temporary artifacts before reruns;
-- export final control workbooks.
-
-The public [`acl/financial_control_coverage.acl`](acl/financial_control_coverage.acl) file is a small representative example. It preserves the control pattern without exposing production code or connections.
-
-### 3. Reconciliation and exception classification
-
-Typical rules classify cases such as:
-
-- enrolled but not billed;
-- billed without a matching enrollment;
-- billed before or after the expected period;
-- cash or manual adjustments;
-- scholarships or discounts outside their effective range;
-- theoretical versus applied discount differences;
-- low-volume cases requiring manual review.
-
-![Synthetic expected-versus-actual billing control](pictures/check_masiva.PNG)
-
-## Representative repository contents
-
-```text
-.
-|-- acl/
-|   `-- financial_control_coverage.acl
-|-- data/
-|   |-- synthetic_billing_control.csv
-|   |-- synthetic_billed_scope.csv
-|   `-- synthetic_expected_scope.csv
-|-- docs/
-|   |-- DATA_DICTIONARY.md
-|   `-- images/
-|       |-- financial-control-coverage.png
-|       `-- financial-control-coverage.svg
-|-- pictures/
-|   `-- sanitized screenshots
-|-- python_jupyter/
-|   |-- notebooks/
-|   |   `-- 01_synthetic_billing_reconciliation.ipynb
-|   |-- src/
-|   |   `-- control_reconciliation.py
-|   |-- .env.example
-|   |-- oracle_connection.example.py
-|   `-- requirements.txt
-|-- sql/
-|   |-- 00_create_synthetic_tables.sql
-|   |-- 01_extract_control_scope.sql
-|   |-- 02_reconcile_expected_actual.sql
-|   |-- 03_financial_control_coverage.sql
-|   `-- 04_data_quality_checks.sql
-|-- tests/
-|   `-- test_python_reconciliation.py
-|-- README.md
-`-- README.es.md
-```
-
-## Demonstrated results
-
-- Approximately **98% of monthly billed financial value** covered by strong controls for the defined scope.
-- The most data-intensive controls processed datasets reaching approximately **5 GB** using ACL and Oracle-backed sources; this was a demonstrated maximum scale, not the standard size of every control.
-- Repeatable classification of differences before downstream collection activities.
-- Manual analysis focused on a smaller exception population instead of the complete billing universe.
-- Reusable monthly and academic-period controls with reduced maintenance.
-- Progressive migration of selected controls from ACL to Python/Jupyter, with Pandas reconciliations and more traceable review outputs.
-
-## Reproducing the synthetic example
-
-1. Run the scripts under `sql/` in numerical order in an Oracle development environment.
-2. Confirm that `03_financial_control_coverage.sql` returns 98% for the included data.
-3. Review the same input in `data/synthetic_billing_control.csv`.
-4. If ACL Analytics is available, adapt the representative script to an imported table with the same fields.
-
-To run the Python/Jupyter demonstration:
-
-```powershell
-python -m pip install -r python_jupyter/requirements.txt
-python -m pytest
-jupyter lab python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb
-```
-
-The `oracle_connection.example.py` file is a secure template only: it relies on environment variables and fictitious view names. It is not a copy of the production connection.
-
-The SQL example is self-contained and uses only synthetic portfolio tables. ACL Analytics is commercial software, so the ACL script is provided as a readable implementation pattern rather than an automated CI test.
-
-## Confidentiality and security
-
-- No real student, customer, or employee data is included.
-- No production table names, server names, DSNs, emails, passwords, or connection strings are included.
-- Monetary values and identifiers are synthetic.
-- Public scripts reproduce the technical pattern, not the production implementation.
-- Screenshots are retained only when they contain sanitized or fictitious information.
-- Production notebooks are not published: they may expose internal names, queries, results, or configuration references even when passwords live elsewhere.
-
-## Professional summary
-
-> I developed automated billing controls using ACL Analytics and Oracle SQL, and I am currently migrating selected controls to Python and Jupyter Notebook. With Pandas, I extract and normalize Oracle data, reconcile account-level universes in both directions, apply business justifications, and validate both line counts and monetary amounts. The existing controls cover approximately 98% of monthly billed value within the defined scope, and the most data-intensive cases processed datasets of up to approximately 5 GB. The Python evolution preserves that control knowledge while improving traceability, reuse, and future historical persistence in collaboration with BI.
+The [earlier generic notebook](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb),
+[module](python_jupyter/src/control_reconciliation.py), fixtures and tests are preserved.
+Its original synthetic coverage example remains an illustration, not evidence of current
+production coverage. New features should use the shared package above.

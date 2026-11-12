@@ -1,49 +1,48 @@
-"""Illustrative Oracle extraction using environment variables.
+"""Optional extraction template. Fictitious objects; import has no side effects.
 
-Map the placeholder views and fields to an authorized environment before use.
-Never hard-code credentials in source code or notebooks.
+Never call against an environment without authorization. No connection is used by the demos.
 """
-
 import os
-
-import pandas as pd
-from sqlalchemy import create_engine, text
+import re
 
 
-required_variables = ["ORACLE_USER", "ORACLE_PASSWORD", "ORACLE_DSN"]
-missing = [name for name in required_variables if not os.getenv(name)]
-if missing:
-    raise RuntimeError(f"Missing environment variables: {', '.join(missing)}")
+def extract_synthetic_scopes(period):
+    """Read placeholder views using a bound period, disposing the engine afterward."""
+    if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", period):
+        raise ValueError("Period must be YYYY-MM")
+    import pandas as pd
+    from sqlalchemy import URL, create_engine, text
 
-engine = create_engine(
-    "oracle+oracledb://",
-    connect_args={
-        "user": os.environ["ORACLE_USER"],
-        "password": os.environ["ORACLE_PASSWORD"],
-        "dsn": os.environ["ORACLE_DSN"],
-    },
-)
-
-period = "2026-01"
-expected_query = text(
-    """
-    SELECT account_ref, expected_line_count, expected_amount
-    FROM portfolio_expected_scope
-    WHERE billing_period = :billing_period
-    """
-)
-billed_query = text(
-    """
-    SELECT account_ref, billed_line_count, billed_amount, justification_type
-    FROM portfolio_billed_scope
-    WHERE billing_period = :billing_period
-    """
-)
-
-with engine.connect() as connection:
-    expected_scope = pd.read_sql(
-        expected_query, connection, params={"billing_period": period}
+    required = ["ORACLE_USER", "ORACLE_PASSWORD", "ORACLE_DSN"]
+    if any(not os.environ.get(name) for name in required):
+        raise RuntimeError("Required Oracle environment configuration is missing")
+    # URL/driver arguments handle reserved characters without interpolating a URL.
+    engine = create_engine(
+        URL.create("oracle+oracledb"),
+        connect_args={
+            "user": os.environ["ORACLE_USER"],
+            "password": os.environ["ORACLE_PASSWORD"],
+            "dsn": os.environ["ORACLE_DSN"],
+        },
     )
-    billed_scope = pd.read_sql(
-        billed_query, connection, params={"billing_period": period}
-    )
+    queries = {
+        "expected": text("""
+            SELECT row_id, student_ref, program_ref, period, amount
+            FROM portfolio_synthetic_assigned
+            WHERE period = :period
+        """),
+        "actual": text("""
+            SELECT row_id, student_ref, program_ref, period, amount, manual_adjustment
+            FROM portfolio_synthetic_billed
+            WHERE period = :period
+        """),
+    }
+    try:
+        with engine.connect() as connection:
+            return {
+                name: pd.read_sql(query, connection, params={"period": period},
+                                  coerce_float=False)
+                for name, query in queries.items()
+            }
+    finally:
+        engine.dispose()
