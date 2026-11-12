@@ -1,60 +1,64 @@
-# Architecture
+# End-to-end architecture
 
-The package in `src/financial_controls` is the maintained implementation. The earlier
-`python_jupyter/src/control_reconciliation.py` API remains unchanged for compatibility.
+[Home](../README.md) · [Deep dive](interview_deep_dive.md)
 
-| Module | Responsibility |
-|---|---|
-| contracts | Required fields, periods, normalized composite keys, unique source IDs, explicit booleans |
-| money | Decimal ingestion, half-up cents, integer-rate calculation, signed display |
-| reconciliation | Aggregation, validated outer join, allocation ledger, statuses, independent totals |
-| controls | Enrollment, billing and scholarship-specific universe/rule construction |
-| reporting | Escaped HTML, CSV and JSON review exports |
-| demo | Deterministic offline fixture loading and CLI |
+![Data and control flow](images/architecture.svg)
 
-All control functions are pure with respect to external systems: no connections, writes or
-environment lookup. Only the CLI/report exporter writes local artifacts. Frames are copied
-before mutation. No wall-clock period selection is used.
+## Source boundary
 
-## Join contracts
+The executable path loads string-typed CSVs from data/synthetic.
+An optional Oracle extraction contract shows bound periods and external configuration.
+No notebook or control module opens a network connection; the optional example runs only
+when explicitly called in an authorized environment.
 
-Source event `row_id` values must be unique before aggregation. Duplicate events are errors,
-not silently deduplicated. Student/program strings are trimmed and uppercased without numeric
-conversion. Null/blank keys fail, except missing programs in applied scholarships, which are
-routed to an unassigned ledger.
+## Stages and responsibilities
 
-Aggregation produces one row per student/program. The comparison uses `outer` with
-`validate="one_to_one"` and a presence indicator. Scholarship rules have one row per program
-per selected period; the rule join uses `many_to_one`. Counts and enrichment joins use
-`one_to_one`. There are no unchecked joins in the new package.
+| Stage | Module | Check / evidence |
+|---|---|---|
+| Scope and normalize | contracts.py + case adapter | Explicit period, event ID uniqueness, required composite keys |
+| Monetary conversion | money.py | Finite decimal input, row-level half-up cents, signed values |
+| Eligibility / aggregation | controls.py | Domain-specific universe, counts, unique program rules |
+| Bidirectional comparison | reconciliation.py | Outer one_to_one summaries, presence indicator, immutable original deltas |
+| Explanation | reconciliation.py | Unique evidence IDs, direction checks, bounded capacity |
+| Conservation | reconciliation.py | Pre-join totals = detail + explicitly unassigned |
+| Review | reporting.py | Separate math/review states, summary, CSV/HTML and trace |
+| Trace | trace.py | Ordered metadata events and optional logger output |
+
+Control functions copy frames before transformation and return a ControlResult.
+The result carries detail, allocations, unassigned records, KPIs and a stage ledger.
+No source records or connection parameters are logged.
+
+## Relationship contracts
+
+Source row_id is unique within each file before period selection.
+Aggregations produce one student/program row; the engine outer-merges with one_to_one.
+Scholarship rule lookup uses many_to_one and fails on absent or duplicate configuration.
+Count enrichment and final theoretical metadata joins use one_to_one.
 
 ## Accounting identities
 
-For each measure (lines and cents), with actual minus expected as the sign convention:
+For lines and integer cents, the sign is actual minus expected:
 
 ```text
-mother difference = pre-join actual total - pre-join expected total
-detail difference = sum(actual - expected at the composite key)
-unallocated = mother difference - detail difference
+mother difference = pre-join actual total − pre-join expected total
+detail difference = sum of original deltas at student/program grain
+unallocated = mother difference − detail difference
 mother difference = detail difference + explicitly unassigned source amounts
-original difference = signed justified allocation + signed pending residual
+original delta = signed justified allocation + signed pending residual
 ```
 
-`detail_reconciles` requires zero unallocated lines and at most the configured monetary
-tolerance. `totals_bridge_reconciles` checks exact equality after including the unassigned
-ledger. `control_clear` additionally requires no pending cases and no unassigned rows.
-Unassigned rows are not silently labeled justified.
+detail_reconciles requires zero unallocated lines and at most one cent unallocated.
+totals_bridge_reconciles requires exact conservation after including the unassigned ledger.
+control_clear additionally requires no pending cases and no unassigned rows.
+These flags answer different questions.
 
-Evidence rows are globally unique within a control run and consumed once in stable priority
-order. Their allocation is capped independently for lines and amount. This is an aggregate
-explanatory model, not an exact invoice-line matching algorithm.
+## Reproducibility and presentation
 
-## Reproducibility
+The synthetic period is 2030-09. Empty valid periods return empty scopes.
+Money policy is row half-up to cents, rate half-up once per key, default tolerance one cent.
+New notebooks include synthetic executed outputs, scrubbed metadata and independently asserted
+results. They expose intermediate aggregation, deliberate contract failure, evidence and bridges.
+Assets are generated from the same result objects; no hand-entered screenshot totals are used.
 
-The fixture period is 2030-09. Other valid periods return empty scopes rather than reuse prior
-state. Monetary inputs are decimal strings; each source row is rounded half-up to cents,
-then summed. Rate amounts are rounded once per student/program. Default tolerance is one cent.
-The policy is a public engineering choice, not a claim about institutional accounting policy.
-
-CI tests Python 3.11 and 3.12, executes each new notebook in a fresh kernel and uploads review
-artifacts. Oracle queries are examples, not integration-tested database adapters.
+CI runs tests, notebooks, asset generation, links and public-text scanning on Python 3.11/3.12.
+Oracle SQL is an example, not an integration test.

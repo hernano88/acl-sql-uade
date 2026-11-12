@@ -1,8 +1,9 @@
 """Three synthetic controls. Business assumptions are documented in docs/business_rules.md."""
 import pandas as pd
-from .contracts import KEYS, scope, normalize_keys, unique, require, boolean_column
+from .contracts import KEYS, scope, unique, require, boolean_column
 from .money import money_column, rate_amount
 from .reconciliation import reconcile, empty_evidence
+from .trace import scoped, record
 
 
 def units(frame, *, money=False):
@@ -31,7 +32,11 @@ def evidence_from(frame, rule, direction, *, money=False):
 def enrollment_control(enrollments, assigned, cash, *, period):
     enr = scope(enrollments, period, ["chargeable"])
     asg = scope(assigned, period, ["prior_period"])
+    cash_input = cash
     cash = scope(cash, period, [])
+    stages = []
+    for name, original, selected in [("enrollments", enrollments, enr), ("assigned", assigned, asg), ("cash", cash_input, cash)]:
+        scoped(stages, name, original, selected)
     chargeable = boolean_column(enr, "chargeable")
     prior = boolean_column(asg, "prior_period")
     evidence = pd.concat([
@@ -39,22 +44,35 @@ def enrollment_control(enrollments, assigned, cash, *, period):
         evidence_from(enr.loc[~chargeable], "SYNTHETIC_NON_CHARGEABLE", -1),
         evidence_from(asg.loc[prior], "SYNTHETIC_PRIOR_PERIOD", 1),
     ], ignore_index=True)
-    return reconcile(units(enr), units(asg), evidence)
+    result = reconcile(units(enr), units(asg), evidence)
+    result.trace = stages + result.trace
+    return result
 
 
 def billing_control(assigned, billed, *, period):
+    billed_input = billed
     asg = scope(assigned, period, ["amount"])
     billed = scope(billed, period, ["amount", "manual_adjustment"])
+    stages = []
+    scoped(stages, "assigned", assigned, asg)
+    scoped(stages, "billed", billed_input, billed)
     manual = boolean_column(billed, "manual_adjustment")
     evidence = evidence_from(billed.loc[manual], "SYNTHETIC_MANUAL_ADJUSTMENT", 1, money=True)
-    return reconcile(units(asg, money=True), units(billed, money=True), evidence)
+    result = reconcile(units(asg, money=True), units(billed, money=True), evidence)
+    result.trace = stages + result.trace
+    return result
 
 
 def scholarship_control(enrollments, billed, applied, rules, exceptions, *, period):
+    billed_input, applied_input, exceptions_input = billed, applied, exceptions
     enr = scope(enrollments, period, ["chargeable"])
     boolean_column(enr, "chargeable")
     billed = scope(billed, period, ["amount"])
     applied = scope(applied, period, ["amount"], nullable_program=True)
+    stages = []
+    scoped(stages, "enrollments", enrollments, enr)
+    scoped(stages, "billed", billed_input, billed)
+    scoped(stages, "applied", applied_input, applied)
     require(rules, ["period", "program_ref", "min_subjects", "rate_bps"])
     rules = rules.loc[rules["period"].eq(period)].copy()
     rules["program_ref"] = rules["program_ref"].astype("string").str.strip().str.upper()
@@ -69,6 +87,7 @@ def scholarship_control(enrollments, billed, applied, rules, exceptions, *, peri
     if rules["min_subjects"].lt(1).any() or not rules["rate_bps"].between(0, 10000).all():
         raise ValueError("Invalid synthetic eligibility rule")
 
+    record(stages, "eligibility.rules", len(rules), "many_to_one;no_missing_configuration")
     base = units(billed, money=True).groupby(KEYS, as_index=False)["cents"].sum()
     counts = enr.groupby(KEYS, as_index=False).size().rename(columns={"size": "subjects"})
     theory = base.merge(rules[["program_ref", "min_subjects", "rate_bps"]],
@@ -87,14 +106,17 @@ def scholarship_control(enrollments, billed, applied, rules, exceptions, *, peri
         for r in theory.itertuples()
     ], index=theory.index, dtype="int64")
     theory["lines"] = pd.Series(0, index=theory.index, dtype="int64")
+    record(stages, "eligibility.theory", len(theory), "one_to_one_counts;half_up_rate")
     real = units(applied, money=True)
     if real["cents"].lt(0).any():
         raise ValueError("Applied scholarship must use positive benefit convention")
     real["lines"] = 0  # Scholarship reconciliation measures money, not benefit row counts.
     unassigned = real.loc[real["program_ref"].isna()].copy()
+    record(stages, "route.unassigned", len(unassigned), "never_distribute_across_programs")
     assigned_real = real.loc[real["program_ref"].notna()].copy()
 
     exc = scope(exceptions, period, ["rule", "direction", "amount"])
+    scoped(stages, "exceptions", exceptions_input, exc)
     if not exc["rule"].astype("string").str.startswith("SYNTHETIC_").all():
         raise ValueError("Public exception rules must be explicitly synthetic")
     evidence = evidence_from(exc, "SYNTHETIC_SCHOLARSHIP_EXCEPTION", 1, money=True)
@@ -109,4 +131,5 @@ def scholarship_control(enrollments, billed, applied, rules, exceptions, *, peri
         theory[[*KEYS, "subjects", "min_subjects", "rate_bps", "base_cents"]],
         on=KEYS, how="left", validate="one_to_one"
     )
+    result.trace = stages + result.trace
     return result

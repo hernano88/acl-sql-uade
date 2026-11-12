@@ -1,0 +1,9 @@
+student_ref,program_ref,lines_expected,cents_expected,lines_actual,cents_actual,presence,difference_lines,pending_lines,difference_cents,pending_cents,mixed_direction,raw_status,justified_lines,justified_cents,review_status
+SYN-S001,SYN-A,2,0,2,0,both,0,0,0,0,False,OK,0,0,OK
+SYN-S001,SYN-B,1,0,1,0,both,0,0,0,0,False,OK,0,0,OK
+SYN-S002,SYN-A,2,0,1,0,both,-1,0,0,0,False,DE MENOS,-1,0,JUSTIFICADO
+SYN-S003,SYN-B,2,0,2,0,both,0,0,0,0,False,OK,0,0,OK
+SYN-S004,SYN-A,1,0,2,0,both,1,0,0,0,False,DE MÁS,1,0,JUSTIFICADO
+SYN-S005,SYN-A,1,0,0,0,left_only,-1,-1,0,0,False,DE MENOS,0,0,PENDIENTE
+SYN-S006,SYN-B,0,0,1,0,right_only,1,1,0,0,False,DE MÁS,0,0,PENDIENTE
+SYN-S007,SYN-A,1,0,0,0,left_only,-1,0,0,0,False,DE MENOS,-1,0,JUSTIFICADO

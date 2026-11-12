@@ -1,3 +1,7 @@
+# Archivo histórico
+
+Guía anterior, fuera del recorrido actual. Las nuevas vistas se generan sólo desde fixtures sintéticas.
+
 # Capturas recomendadas para la migración Python/Jupyter
 
 Las capturas son opcionales: el repositorio ya contiene un notebook reproducible, código modular y pruebas. Si se agregan evidencias visuales, conviene que refuercen el razonamiento sin exponer el entorno productivo.

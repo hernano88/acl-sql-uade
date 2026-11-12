@@ -26,7 +26,7 @@ def main():
         if not path.is_file() or name == "scripts/scan_public.py":
             continue
         if path.suffix.lower() not in {".py", ".md", ".sql", ".csv", ".json", ".ipynb",
-                                       ".yml", ".yaml", ".toml", ".txt", ".example", ".acl"}:
+                                       ".yml", ".yaml", ".toml", ".txt", ".example", ".acl", ".html", ".svg"}:
             continue
         text = path.read_text(encoding="utf-8-sig")
         checked += 1

@@ -20,7 +20,7 @@ This is a portfolio demonstration of control design, not a certified accounting 
   new package does not require Excel or reproduce private workbook layouts.
 - Dependency ranges are bounded, not a fully locked cross-platform environment. CI covers
   Python 3.11/3.12; only the locally reported runtime is actually tested during implementation.
-- Existing public SQL/ACL examples and images are retained as legacy material. New notebook
+- Historical examples and images are archived outside the current walkthrough. New notebook
   execution and text scanning do not independently validate their historical business claims.
 
 Next: reviewer agreement on synthetic semantics; exact line-matching prototype; integration

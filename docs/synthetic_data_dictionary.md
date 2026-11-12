@@ -49,4 +49,5 @@ amounts, keyed pending net/absolute values, case counts and distinct pending stu
 Pending metrics refer to keyed detail; unassigned rows/amounts are reported separately.
 All files use one fictitious currency. Multi-currency conversion is out of scope.
 
-The [earlier example dictionary](DATA_DICTIONARY.md) is retained for the legacy public fixtures.
+Stage events have stage, rows and check columns. They contain metadata only, never source records.
+Summary rows group mathematical/review states; distinct-student counts are not additive across groups.

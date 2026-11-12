@@ -28,6 +28,10 @@ jobs:
         run: python -m financial_controls.demo --period 2030-09 --output artifacts
       - name: Execute three notebooks in fresh kernels
         run: python scripts/run_notebooks.py
+      - name: Generate synthetic portfolio evidence
+        run: python scripts/build_portfolio_assets.py
+      - name: Check documentation and notebook links
+        run: python scripts/check_links.py
       - name: Scan public source text
         run: python scripts/scan_public.py
       - uses: actions/upload-artifact@v4

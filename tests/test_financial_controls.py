@@ -229,7 +229,7 @@ def test_oracle_template_is_inert_on_import(monkeypatch):
     import runpy
     for name in ["ORACLE_USER", "ORACLE_PASSWORD", "ORACLE_DSN"]:
         monkeypatch.delenv(name, raising=False)
-    module = runpy.run_path(str(ROOT / "python_jupyter" / "oracle_connection.example.py"))
+    module = runpy.run_path(str(ROOT / "examples" / "oracle_connection.py"))
     assert callable(module["extract_synthetic_scopes"])
 
 
@@ -263,3 +263,36 @@ def test_invalid_rule_value_does_not_echo_source_value():
 def test_negative_unassigned_line_count_rejected():
     with pytest.raises(ValueError, match="Negative unassigned"):
         reconcile(one(), one(), unassigned=one(-1, 0))
+
+
+def test_stage_trace_is_ordered_and_metadata_only(caplog):
+    import logging
+    caplog.set_level(logging.INFO, logger="financial_controls")
+    for result in run_cases(ROOT).values():
+        stages = [event["stage"] for event in result.trace]
+        assert stages[0].startswith("scope.")
+        assert stages[-1] == "totals_bridge"
+        assert stages.index("input_contract") < stages.index("join.outer")
+        assert stages.index("join.outer") < stages.index("allocate_evidence")
+        assert result.trace[-1]["check"] == "PASS"
+    assert "SYN-S001" not in caplog.text
+    assert "stage=join.outer" in caplog.text
+
+
+def test_summary_preserves_amounts_and_case_counts():
+    from financial_controls.reporting import summarize_review
+    for result in run_cases(ROOT).values():
+        summary = summarize_review(result)
+        assert summary["cases"].sum() == len(result.detail)
+        assert summary["difference_cents"].sum() == result.kpis["detail_difference_cents"]
+        assert summary["pending_cents"].sum() == result.kpis["pending_net_cents"]
+
+
+def test_review_export_contains_stage_ledger(tmp_path):
+    from financial_controls.reporting import export_review
+    result = run_cases(ROOT)["03_scholarship"]
+    export_review(result, tmp_path, "Synthetic scholarship")
+    trace = pd.read_csv(tmp_path / "trace.csv")
+    assert trace.iloc[-1]["stage"] == "totals_bridge"
+    assert (tmp_path / "summary.csv").is_file()
+    assert "3.00" in (tmp_path / "report.html").read_text(encoding="utf-8")

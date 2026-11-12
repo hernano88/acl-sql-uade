@@ -1,92 +1,134 @@
-# Controles financieros con Python, Pandas, Jupyter y Oracle SQL
+# Controles financieros · Python, Pandas y Oracle SQL
 
-[English](README.md)
+[English](README.md) · [Recorrido de un minuto](docs/portfolio_walkthrough.es.md) · [Profundización técnica](docs/interview_deep_dive.es.md)
 
-Tres casos reproducibles con **datos completamente sintéticos**, basados en patrones de
-modernización de controles cuyo conocimiento de negocio se originó en **ACL Analytics y Oracle SQL**.
-Python y Jupyter son el centro del proyecto; ACL se conserva como antecedente.
+**Tres flujos de control financiero reconstruidos desde notebooks de trabajo profesional en un proyecto Python reproducible y completamente sintético.**
 
-| Caso | Pregunta de control | Medidas | Clave pública |
-|---|---|---|---|
-| [01 — Inscripciones vs asignado](notebooks/01_enrollment_vs_assigned.ipynb) | ¿Las líneas asignadas coinciden con las inscripciones? | Cantidades | Alumno + carrera ficticia |
-| [02 — Asignado vs facturado](notebooks/02_assigned_vs_billed.ipynb) | ¿Se facturaron los conceptos asignados? | Líneas e importe | Alumno + carrera ficticia |
-| [03 — Beca teórica vs aplicada](notebooks/03_expected_vs_applied_scholarship.ipynb) | ¿El beneficio aplicado coincide con la elegibilidad sintética? | Importe y cantidades auxiliares | Alumno + carrera ficticia |
+El proyecto conecta inscripciones académicas, conceptos asignados a facturación, movimientos
+facturados y elegibilidad de becas. Convierte cada diferencia en un resultado revisable:
+discrepancia original, evidencia que la explica, remanente pendiente y conciliación con los totales de origen.
 
-Los ejemplos contienen excepciones deliberadas. **Que los totales concilien no significa que
-todos los casos estén resueltos.**
+![Los tres controles y sus resultados sintéticos](docs/images/control-overview.svg)
 
-## Ejecución local sin Oracle
+## Tres controles, un motor compartido
 
-Python 3.11 o superior. Desde la raíz del repositorio:
+| Caso de estudio | Qué verifica | Un resultado que merece revisión |
+|---|---|---|
+| **[01 · Inscripciones → asignado a facturación](docs/cases/01_enrollment.es.md)** | Consistencia entre actividad académica y preparación de facturación | 10 líneas de inscripción frente a 9 asignadas; los excesos y faltantes permanecen visibles |
+| **[02 · Asignado → movimientos facturados](docs/cases/02_billing.es.md)** | Integridad de cantidades e importes facturados | Ambas fuentes tienen 9 líneas, pero difieren en −40,00 y quedan dos casos por clave pendientes |
+| **[03 · Beca teórica → beca aplicada](docs/cases/03_scholarship.es.md)** | Aplicación y atribución del beneficio | 45,00 teóricos frente a 65,00 aplicados; 3,00 no tienen carrera y no deben duplicarse |
+
+**Son resultados de datos ficticios, no KPI productivos ni ahorros medidos.**
+El aporte de ingeniería es hacer explícitos el alcance, los joins, los límites de las
+justificaciones y la conciliación independiente. Cada caso tiene página bilingüe, notebook
+ejecutado, vista de resultados y exportaciones para revisión.
+
+## Arquitectura de punta a punta
+
+![Arquitectura desde Oracle o fixtures hasta revisión](docs/images/architecture.svg)
+
+```mermaid
+flowchart LR
+    O["Oracle · ejemplo opcional"] --> X["Período enlazado / configuración externa"]
+    X --> V["Contratos de entrada"]
+    S["CSV sintéticos locales"] --> V
+    V --> P["Pandas · alcance / normalización / agregación"]
+    P --> R["Motor reusable de conciliación"]
+    R --> J["Justificaciones + pendientes"]
+    J --> T["Puente origen / detalle / no asignado"]
+    T --> D["Dashboard / CSV / JSON / trazabilidad"]
+```
+
+La ejecución predeterminada es local. La [plantilla Oracle](examples/oracle_connection.py)
+no conecta al importarse, usa configuración externa y parámetros enlazados, y consulta vistas
+ficticias. Es un contrato de integración de ejemplo, no un despliegue validado.
+
+## Matriz comparativa de controles
+
+| Control | Objetivo | Grano / clave tras filtrar período | Relación esperada | Regla principal | Excepciones | Salida de revisión |
+|---|---|---|---|---|---|---|
+| Inscripciones | Explicar cantidades asignadas frente a inscriptas | Alumno + carrera | 1:1 entre resúmenes | Líneas reales − esperadas | Contado; no aranceladas; cuotas previas | Dirección, evidencia consumida y líneas pendientes |
+| Facturación | Conciliar asignado con movimientos facturados | Alumno + carrera | 1:1 entre resúmenes | Cantidades **e** importes a centavos | Ajustes manuales sintéticos; evidencia parcial | Pendientes monetarios y de líneas, netos y absolutos |
+| Becas | Conciliar aplicado con elegibilidad teórica | Alumno + carrera; reglas por carrera | 1:1 entre universos; muchos:1 con reglas | Mínimo y tasa explícitos sobre base facturada | Asignaciones sintéticas; aplicado sin base; falta de carrera | Teórico, aplicado, justificado y registro no asignado |
+
+Los dos primeros notebooks profesionales agrupaban por alumno: la clave compuesta pública
+es una mejora deliberada. El notebook de becas ya demostraba claves compuestas y cardinalidad
+validada. Ninguna regla ficticia se presenta como política institucional.
+
+## Decisiones técnicas demostradas
+
+- **Contratos antes de comparar:** IDs de fila únicos, claves obligatorias, período explícito y campos Y/N estrictos.
+- **Identificadores estables:** texto normalizado sin perder ceros iniciales; nulos críticos rechazados.
+- **Cardinalidad como control:** cruces outer validados y consulta de reglas muchos-a-uno.
+- **Política monetaria:** ingreso decimal, redondeo half-up, centavos enteros, signos y tolerancia explícitos.
+- **Dos estados:** `OK / DE MÁS / DE MENOS` matemáticos separados de `JUSTIFICADO / PENDIENTE`.
+- **Registro de asignaciones:** cada evidencia se consume una vez y hasta el remanente disponible.
+- **Conservación:** real − esperado = detalle por clave + importe explícitamente no asignado.
+- **Etapas trazables:** cantidades de entrada, exclusiones de alcance, agrupación, joins, evidencias y cuadre; logging opcional de metadatos.
+
+El puente de totales puede conciliar y aun así dejar casos pendientes. Becas demuestra
+esa diferencia en lugar de mostrar un resultado general engañosamente verde.
+
+## Reproducir y revisar
+
+Python 3.11 o superior, desde la raíz:
 
 ```powershell
 python -m venv .venv
 .venv/Scripts/Activate.ps1
 python -m pip install -e ".[dev,notebooks]"
 python -m pytest -q
-python -m financial_controls.demo --period 2030-09 --output artifacts
+python -m financial_controls.demo --period 2030-09 --output artifacts --verbose
 python scripts/run_notebooks.py
+python scripts/build_portfolio_assets.py
+python scripts/check_links.py
 python scripts/scan_public.py
 ```
 
-Abrir los notebooks en JupyterLab o revisar `artifacts/<caso>/report.html`.
-Cada caso genera detalle, asignaciones de justificaciones, registros sin asignar y métricas.
-Las columnas monetarias terminadas en `cents` están expresadas en centavos enteros.
+Los tres [notebooks](notebooks/) incluyen **outputs sintéticos ejecutados** y se pueden leer
+sin iniciar un kernel. El runner genera copias desde kernels nuevos en artifacts; `--publish`
+actualiza los notebooks públicos tras validar los datos ficticios.
+Abrir `artifacts/<caso>/report.html` localmente para ver el dashboard completo.
+
+Cada caso exporta `detail.csv`, `summary.csv`, `allocations.csv`, `unassigned.csv`,
+`trace.csv`, `kpis.json` y `report.html`. Las columnas monetarias CSV están en centavos.
+Las [muestras versionadas](docs/outputs/) y los diagramas se regeneran desde las mismas fixtures.
+
+## Calidad, confidencialidad y límites
+
+Las pruebas incluyen duplicados de eventos/configuración, claves nulas, tipos inválidos,
+centavos, diferencias sólo de cantidad, direcciones contradictorias, justificaciones
+parciales, becas no asignadas, identidades de conciliación y trazabilidad sin datos personales.
+CI también ejecuta notebooks, revisa enlaces y escanea texto público. [Validación](docs/validation.md).
+
+No se distribuyen notebooks, consultas, conexiones, identificadores, resultados ni capturas
+productivos. Las nuevas filas, reglas, tasas e importes son inventados. El mínimo de dos
+materias y la tasa de 10% son políticas de demostración.
+Ver [seguridad](docs/security.md), [reglas](docs/business_rules.md) y [límites](docs/limitations.md).
 
 ## Evidencia del trabajo real vs demostración pública sintética
 
-| Evidencia observada en los notebooks profesionales | Demostración pública / mejora de ingeniería |
+| Observado en los notebooks profesionales | Reconstrucción pública / ingeniería adicional |
 |---|---|
-| Extracción Oracle, DataFrames, agrupaciones y merges | CSV locales y plantilla Oracle opcional |
-| Comparaciones de cantidades académicas y financieras | Clave compuesta en los tres casos; los dos primeros originales agrupaban sólo por alumno |
-| Conciliación de facturación por líneas e importes | Motor compartido y contratos monetarios en centavos |
-| Beca teórica/aplicada y cardinalidad en merges | Mínimo y tasa **ficticios** configurables; configuración faltante produce error |
-| Justificaciones, pendientes, HTML y una exportación Excel | Asignaciones explícitas, límites por evidencia y exportaciones CSV/HTML |
-| Totales madre contra detalle | Puente independiente con registros sin asignar, métricas netas y absolutas |
+| Extracción Oracle, Pandas, agrupaciones, merges y excepciones | Fixtures locales y contrato Oracle sin efectos al importar |
+| Cantidades académicas y conciliación asignado/facturado | Tres casos específicos con un motor compartido |
+| Beca teórica/aplicada, clave compuesta y cardinalidad | Elegibilidad ficticia configurable y registro no asignado |
+| Totales madre/detalle, HTML y una exportación Excel | Puente independiente, asignaciones, resumen, trazas y exportaciones |
+| Código y salidas de ejecuciones guardadas | Tests, kernels nuevos y evidencia visual pública reproducible |
 
-Los originales son privados y no se copian ni importan. La revisión estática observó código
-y salidas guardadas; no certificó exactitud operativa, periodicidad, escala, autoría o impacto.
-No se afirma migración completa, despliegue programado, histórico productivo en Oracle,
-seniority de liderazgo ni ahorro medido. Las cifras de cobertura/volumen previamente descritas
-no se presentan como resultados verificados de estos tres casos.
+La revisión estática no certificó exactitud productiva, frecuencia, escala ni impacto.
+No se afirma migración completa, histórico productivo, ejecución programada, ahorro medido
+ni seniority de liderazgo.
 
-**Los identificadores, importes, fechas, fuentes y reglas de los nuevos casos son ficticios.**
-El mínimo de dos materias y la tasa del 10% son decisiones de la demo; no representan políticas
-institucionales. Las excepciones también usan importes y reglas sintéticos.
+## Elegir el nivel de lectura
 
-## Decisiones técnicas defendibles
+- [Recorrido para recruiters](docs/portfolio_walkthrough.es.md): alcance y tres ejemplos en un minuto.
+- [Profundización para entrevistas](docs/interview_deep_dive.es.md): claves, dinero, evidencia y límites.
+- [Arquitectura](docs/architecture.md) · [Diccionario](docs/synthetic_data_dictionary.md) · [Matriz de controles](docs/control_matrix.md).
+- [Resumen profesional](docs/professional_summary.md): textos defendibles con esta evidencia.
 
-- Granularidad explícita y claves compuestas para evitar compensaciones entre carreras.
-- Normalización como texto, conservando ceros iniciales y rechazando claves faltantes.
-- Cruce bidireccional y validaciones de cardinalidad y unicidad.
-- Conversión decimal con redondeo half-up y aritmética en centavos.
-- Estado matemático `OK / DE MÁS / DE MENOS` separado del estado de revisión.
-- Diferencia original, parte justificada y pendiente conservadas.
-- Beca sin carrera visible como no asignada, sin replicación.
-- Totales de origen previos al merge contra detalle más no asignados.
-- Métricas netas y absolutas, con período explícito.
+## Evolución del proceso anterior
 
-## Documentación y estructura
-
-La [arquitectura](docs/architecture.md) separa contratos, dinero, motor de conciliación,
-adaptadores por caso y presentación. También se incluyen [diccionario](docs/synthetic_data_dictionary.md),
-[matriz de controles](docs/control_matrix.md), [reglas](docs/business_rules.md),
-[límites](docs/limitations.md), [seguridad](docs/security.md) y
-[textos para entrevistas/LinkedIn](docs/professional_summary.md).
-
-`src/financial_controls/` contiene los módulos compartidos; `notebooks/` explica los casos;
-`data/synthetic/` contiene las fuentes ficticias. Las pruebas incluyen el ejemplo público
-anterior. CI ejecuta tests y los tres notebooks desde kernels nuevos, genera reportes y escanea
-texto público. No se conecta a Oracle.
-
-## Oracle SQL y ACL como antecedente
-
-Se conservan los [ejemplos SQL](sql/), el [script ACL](acl/financial_control_coverage.acl),
-el [notebook anterior](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb)
-y su módulo, datos y tests. El ejemplo previo de cobertura es ilustrativo y no valida
-por sí mismo una métrica productiva actual.
-
-La [consulta Oracle de clave compuesta](sql/05_synthetic_composite_scope.sql) usa datos ficticios
-autocontenidos; no fue ejecutada contra Oracle en esta validación.
-La [plantilla de conexión](python_jupyter/oracle_connection.example.py) sólo consulta variables
-de entorno al llamar su función y no se conecta al importarla. Sus vistas son ficticias.
+ACL Analytics fue la herramienta anterior y el origen del conocimiento de control. Scripts,
+capturas y el ejemplo genérico previo se conservan en [legacy/](legacy/README.md) como archivo
+histórico, fuera del recorrido principal del portfolio.

@@ -1,7 +1,8 @@
 """Full-universe reconciliation, capped evidence allocations, independent totals."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pandas as pd
 from .contracts import KEYS, require, unique, normalize_keys
+from .trace import record
 
 MEASURES = ["lines", "cents"]
 EVIDENCE_COLUMNS = [*KEYS, "evidence_id", "rule", "direction", "lines", "cents"]
@@ -14,6 +15,7 @@ class ControlResult:
     allocations: pd.DataFrame
     unassigned: pd.DataFrame
     kpis: dict
+    trace: list[dict] = field(default_factory=list)
 
 
 def summarize(frame):
@@ -46,9 +48,14 @@ def reconcile(expected, actual, evidence=None, unassigned=None, *, tolerance_cen
             raise ValueError("Unassigned measures must be integer units")
     if unassigned["lines"].lt(0).any():
         raise ValueError("Negative unassigned line count")
+    trace = []
+    record(trace, "input_contract", len(expected) + len(actual), "integer_measures;critical_keys;nonnegative_counts")
     left, right = summarize(expected), summarize(actual)
+    record(trace, "aggregate.expected", len(left), "unique_student_program")
+    record(trace, "aggregate.actual", len(right), "unique_student_program")
     detail = left.merge(right, on=KEYS, how="outer", validate="one_to_one",
                         suffixes=("_expected", "_actual"), indicator="presence")
+    record(trace, "join.outer", len(detail), "one_to_one;both_universes_preserved")
     for col in [f"{m}_{s}" for m in MEASURES for s in ("expected", "actual")]:
         detail[col] = detail[col].fillna(0).astype("int64")
     for m in MEASURES:
@@ -67,6 +74,7 @@ def reconcile(expected, actual, evidence=None, unassigned=None, *, tolerance_cen
     detail.loc[over, "raw_status"] = "DE MÁS"
     detail.loc[under, "raw_status"] = "DE MENOS"
 
+    record(trace, "classify", len(detail), "original_differences_preserved")
     evidence = empty_evidence() if evidence is None else evidence.copy()
     require(evidence, EVIDENCE_COLUMNS)
     if not evidence.empty:
@@ -98,6 +106,7 @@ def reconcile(expected, actual, evidence=None, unassigned=None, *, tolerance_cen
         allocations.append({**{k: e[k] for k in KEYS}, "evidence_id": e["evidence_id"],
                             "rule": e["rule"], "direction": e["direction"], **used})
     allocations = pd.DataFrame(allocations, columns=ALLOCATION_COLUMNS)
+    record(trace, "allocate_evidence", len(allocations), "unique_evidence;capacity_capped;direction_checked")
     for m in MEASURES:
         detail[f"justified_{m}"] = detail[f"difference_{m}"] - detail[f"pending_{m}"]
     pending = detail["pending_lines"].ne(0) | detail["pending_cents"].abs().gt(tolerance_cents)
@@ -131,5 +140,7 @@ def reconcile(expected, actual, evidence=None, unassigned=None, *, tolerance_cen
     kpis["control_clear"] = bool(
         not pending.any() and unassigned.empty and kpis["detail_reconciles"]
     )
+    record(trace, "totals_bridge", len(detail) + len(unassigned),
+           "PASS" if kpis["totals_bridge_reconciles"] else "FAIL")
     return ControlResult(detail.sort_values(KEYS).reset_index(drop=True),
-                         allocations, unassigned, kpis)
+                         allocations, unassigned, kpis, trace)

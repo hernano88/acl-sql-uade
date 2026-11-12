@@ -1,29 +1,21 @@
-# Professional wording for review
+# Professional summary for review
 
-Suggested English summary (use only if it accurately reflects personal authorship):
+Use these statements only if they accurately reflect personal authorship and responsibility.
 
-> I work on financial controls using Oracle SQL and ACL Analytics and am modernizing selected
-> workflows with Python, Pandas and Jupyter. My portfolio demonstrates reconciliation of
-> enrollment, assigned billing, posted transactions and scholarships with synthetic data,
-> explicit keys, business justifications and independent total checks.
+## English
+> I develop financial controls with Oracle SQL, Python, Pandas and Jupyter. My work includes
+> reconciling academic enrollment, assigned billing concepts, posted movements and scholarship
+> amounts, with business explanations and source-to-detail checks. My public portfolio rebuilds
+> three control patterns with synthetic data, explicit contracts and reproducible review outputs.
 
-Suggested Spanish summary:
+## Español
+> Desarrollo controles financieros con Oracle SQL, Python, Pandas y Jupyter. Mi trabajo incluye
+> conciliar inscripciones, conceptos asignados, movimientos facturados e importes de becas,
+> con justificaciones de negocio y comprobaciones de origen contra detalle. Mi portfolio
+> reconstruye tres patrones con datos sintéticos, contratos explícitos y salidas reproducibles.
 
-> Trabajo en controles financieros con Oracle SQL y ACL Analytics y modernizo procesos
-> seleccionados con Python, Pandas y Jupyter. Mi portfolio demuestra conciliaciones de
-> inscripciones, conceptos asignados, movimientos facturados y becas con datos sintéticos,
-> claves explícitas, justificaciones de negocio y comprobaciones independientes de totales.
+Possible headline:
+Controles financieros y análisis de datos | Python · Pandas · Jupyter · Oracle SQL
 
-Possible LinkedIn headline:
-Controles financieros y análisis de datos | Oracle SQL · Python · Pandas · Jupyter · ACL Analytics
-
-Interview discussion:
-- Explain why student-only aggregation can hide cross-program differences.
-- Distinguish a totals bridge from a fully resolved control.
-- Explain why a missing-program benefit remains unassigned.
-- Show a partially justified case and its unchanged original delta.
-- Identify which hardening choices are new public engineering work.
-- Describe the migration as selected ongoing work, not a completed platform replacement.
-
-No unverified savings, coverage percentage, data-volume claim, leadership title or production
-deployment claim is included. Nothing in this file has been posted to LinkedIn.
+Do not claim a completed migration, certified accuracy, unverified coverage/volume, measured
+savings or leadership seniority. No LinkedIn update has been posted.

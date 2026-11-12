@@ -1,5 +1,6 @@
 """Deterministic offline entry point for the three public cases."""
 import argparse
+import logging
 from pathlib import Path
 import pandas as pd
 from .controls import enrollment_control, billing_control, scholarship_control
@@ -32,7 +33,10 @@ def main():
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--period", default=DEMO_PERIOD)
     parser.add_argument("--output", type=Path, default=Path("artifacts"))
+    parser.add_argument('--verbose', action='store_true', help='Log stage metadata only')
     args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO, format='%(name)s %(message)s')
     for name, result in run_cases(args.root, args.period).items():
         export_review(result, args.output / name, f"{name} | {args.period} | synthetic")
         print(name, "pending cases:", result.kpis["pending_cases"],

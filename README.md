@@ -1,112 +1,135 @@
-# Financial controls with Python, Pandas, Jupyter and Oracle SQL
+# Financial controls · Python, Pandas & Oracle SQL
 
-[Español](README.es.md)
+[Español](README.es.md) · [60-second walkthrough](docs/portfolio_walkthrough.md) · [Technical deep dive](docs/interview_deep_dive.md)
 
-Three reproducible, **fully synthetic** case studies of financial control modernization.
-The work builds on control knowledge originally implemented with **ACL Analytics and Oracle SQL**.
-Python and Jupyter are the focus of this portfolio; ACL remains available as historical context.
+**Three financial control workflows, reconstructed from professional billing-control notebooks into a reproducible, fully synthetic Python project.**
 
-| Case | Question | Measures | Public key |
-|---|---|---|---|
-| [01 — Enrollment vs assigned billing](notebooks/01_enrollment_vs_assigned.ipynb) | Do assigned billing lines match academic enrollment? | Line counts | Student + program |
-| [02 — Assigned vs billed](notebooks/02_assigned_vs_billed.ipynb) | Were assigned concepts actually billed? | Lines + cents | Student + program |
-| [03 — Expected vs applied scholarship](notebooks/03_expected_vs_applied_scholarship.ipynb) | Does the applied benefit match synthetic eligibility? | Cents; enrollment counts as inputs | Student + program |
+The project connects academic enrollment, assigned billing concepts, posted movements and
+scholarship eligibility. It turns differences into a reviewable result: the original discrepancy,
+the evidence used to explain it, the remaining exposure, and a bridge back to source totals.
 
-The examples deliberately contain unresolved exceptions. A successful **totals bridge** means
-that source totals are accounted for; it does not mean that every transaction is correct.
+![Three control cases and their synthetic results](docs/images/control-overview.svg)
 
-## Run locally without Oracle
+## Three controls, one control engine
 
-Python 3.11+; commands run from the repository root:
+| Case study | What it protects | A result worth investigating |
+|---|---|---|
+| **[01 · Enrollment → assigned billing](docs/cases/01_enrollment.md)** | Consistency between academic activity and billing preparation | 10 enrollment lines vs 9 assigned lines; both extra and missing assignments remain visible |
+| **[02 · Assigned → posted billing](docs/cases/02_billing.md)** | Completeness and accuracy of posted billing | Both sources have 9 lines, yet the amount differs by −40.00 and two keyed cases remain pending |
+| **[03 · Expected → applied scholarship](docs/cases/03_scholarship.md)** | Correct benefit application and attribution | 45.00 expected vs 65.00 applied; 3.00 lacks a program and must not be duplicated |
 
-```bash
-python -m venv .venv
-# Activate .venv (Windows PowerShell: .venv/Scripts/Activate.ps1)
-# macOS/Linux: source .venv/bin/activate
-python -m pip install -e ".[dev,notebooks]"
-python -m pytest -q
-python -m financial_controls.demo --period 2030-09 --output artifacts
-python scripts/run_notebooks.py
-python scripts/scan_public.py
-```
+**Those are fixture results, not production KPIs or measured savings.**
+The engineering contribution is explicit scope, validated joins, bounded justifications and
+independent reconciliation. Each case includes a bilingual study, an executed notebook,
+a generated result snapshot and review exports.
 
-Open a notebook with JupyterLab, or review each generated `artifacts/<case>/report.html`.
-Every case exports detail, justification allocations, unassigned rows and KPI JSON.
-Monetary detail fields ending in `cents` are integers, not currency-unit floats.
+## End-to-end design
 
-## Evidence from real work vs public synthetic demonstration
-
-| Evidence from the reviewed professional notebooks | Public demonstration / engineering improvement |
-|---|---|
-| Oracle extraction into Pandas, grouping and merges | Offline CSV fixtures; optional, inert Oracle connection example |
-| Enrollment and billing quantity comparisons | Composite keys in all three public controls; the first two originals grouped by student |
-| Billing reconciliation of lines and amounts | Shared bidirectional engine with integer-cent contracts |
-| Scholarship theory, applied amount, composite key and merge validation | Configurable **synthetic** minimum and rate; missing configuration fails |
-| Business justifications, pending cases and HTML reports; one Excel export | Explicit capped allocations, portable CSV/HTML outputs |
-| Mother/detail total reconciliation | Independent totals, unassigned bridge, net and absolute residuals |
-| Selected `one_to_one` / `many_to_one` checks in scholarship | Declared cardinality and source-row uniqueness contracts throughout |
-
-The originals are private and are neither distributed nor imported. The audit observed code
-and saved outputs; it did not rerun production processing or independently certify operational
-accuracy, cadence, ownership, scale or impact. This repository does not claim a completed
-migration, scheduled deployment, production history tables, leadership seniority or measured savings.
-Previously described coverage/volume figures are not used as validated outcomes of these three cases.
-
-**All public rules, identifiers, amounts, source names and dates in the new cases are fictitious.**
-The synthetic scholarship uses a minimum of two subjects and a 10% rate solely for demonstration.
-Those values and allowance amounts do not disclose institutional policy.
-See [business rules](docs/business_rules.md) and [limitations](docs/limitations.md).
-
-## Control decisions worth discussing in an interview
-
-- Aggregate at an explicit grain. Equal student totals can hide differences between programs.
-- Normalize strings without converting identifiers to numbers; reject missing keys.
-- Preserve both universes with an outer join; validate one-to-one summarized joins.
-- Read decimal strings, round half-up to cents and perform arithmetic with integers.
-- Keep `raw_status` (`OK`, `DE MÁS`, `DE MENOS`) separate from review status.
-- Cap each justification, retain the original difference and expose partially explained cases.
-- Keep scholarships without a program unassigned; never replicate them across a student's programs.
-- Compare pre-join totals with keyed detail plus explicitly unassigned amounts.
-- Report net and absolute residuals; do not hide offsetting exceptions.
-- Parameterize periods rather than relying on the execution date.
-
-## Architecture and review material
+![Oracle-to-review architecture with offline synthetic input](docs/images/architecture.svg)
 
 ```mermaid
 flowchart LR
-    A[Synthetic CSV / optional Oracle contract] --> B[Validation and normalization]
-    B --> C[Case-specific eligibility and aggregation]
-    C --> D[Shared full outer reconciliation]
-    D --> E[Capped evidence allocations]
-    E --> F[Detail + pending + unassigned]
-    F --> G[Independent totals bridge]
-    G --> H[HTML / CSV / notebook review]
+    O["Oracle · optional example"] --> X["Bound period / external configuration"]
+    X --> V["Input contracts"]
+    S["Offline synthetic CSV"] --> V
+    V --> P["Pandas · scope / normalize / aggregate"]
+    P --> R["Reusable reconciliation engine"]
+    R --> J["Evidence allocations + residuals"]
+    J --> T["Source/detail/unassigned bridge"]
+    T --> D["Dashboard / CSV / JSON / stage ledger"]
 ```
 
-- [Architecture](docs/architecture.md)
-- [Data dictionary](docs/synthetic_data_dictionary.md)
-- [Control matrix and known results](docs/control_matrix.md)
-- [Business rules and allocation assumptions](docs/business_rules.md)
-- [Security boundary](docs/security.md)
-- [Limitations and roadmap](docs/limitations.md)
-- [Interview and LinkedIn wording](docs/professional_summary.md)
+The default path is offline. The [Oracle extraction template](examples/oracle_connection.py)
+has no import-time connection, uses environment configuration and bound parameters, and
+reads only fictitious views. Database integration is an example contract, not a tested deployment.
 
-`src/financial_controls/` contains the shared engine and three small control adapters.
-`tests/` covers both the new cases and the earlier public reconciliation example.
-CI runs tests, executes all three notebooks in fresh kernels, generates review reports and scans
-public text. It does not connect to Oracle.
+## Comparative control matrix
 
-## Oracle SQL and ACL legacy
+| Control | Objective | Grain / key after period scope | Expected relationship | Main rule | Exceptions | Review output |
+|---|---|---|---|---|---|---|
+| Enrollment | Assigned counts explain enrollment counts | Student + program | 1:1 summaries | Actual lines − expected lines | Cash; non-chargeable; prior-period assignment | Direction, consumed evidence, residual lines |
+| Billing | Posted lines and amounts match assigned billing | Student + program | 1:1 summaries | Compare counts **and** cents | Synthetic manual adjustments; partial evidence | Monetary/line residuals and net/absolute exposure |
+| Scholarship | Applied benefit matches theoretical eligibility | Student + program; rules by program | 1:1 scopes; many:1 rule lookup | Explicit minimum + rate on billed base | Synthetic allowances; actual-only keys; missing program | Theory, applied, justifications, unassigned ledger |
 
-[SQL examples](sql/) and [ACL example](acl/financial_control_coverage.acl) remain available.
-[Composite-grain Oracle SQL](sql/05_synthetic_composite_scope.sql) is a standalone synthetic
-query; Oracle execution is optional and has not been validated by the Python test suite.
+The first two professional notebooks grouped by student; the public composite grain is an
+intentional hardening choice. The scholarship notebook already demonstrated composite keys
+and explicit merge cardinality. No public rule is represented as institutional policy.
 
-The [connection template](python_jupyter/oracle_connection.example.py) reads environment variables
-only inside an explicitly called function. Importing it does not connect. It uses fictitious view
-names and bound period parameters; no real infrastructure is required for the portfolio.
+## Technical decisions demonstrated
 
-The [earlier generic notebook](python_jupyter/notebooks/01_synthetic_billing_reconciliation.ipynb),
-[module](python_jupyter/src/control_reconciliation.py), fixtures and tests are preserved.
-Its original synthetic coverage example remains an illustration, not evidence of current
-production coverage. New features should use the shared package above.
+- **Contracts before comparison:** unique source-row IDs, required keys, explicit periods and strict Y/N fields.
+- **Stable identifiers:** normalize strings while preserving leading zeroes; reject critical nulls.
+- **Cardinality as a check:** validated outer merges and a many-to-one scholarship rule lookup.
+- **Monetary policy:** decimal ingestion, half-up rounding to integer cents, signed arithmetic and explicit tolerance.
+- **Two states:** mathematical `OK / DE MÁS / DE MENOS` remains separate from `JUSTIFICADO / PENDIENTE`.
+- **An allocation ledger:** each evidence ID is consumed once, bounded by the remaining difference.
+- **A conservation check:** actual − expected = keyed detail + explicitly unassigned amounts.
+- **Traceable stages:** source row counts, scope exclusions, aggregation, joins, evidence and totals checks are exported; optional logging contains metadata only.
+
+A reconciled totals bridge can coexist with unresolved cases. The scholarship case deliberately
+demonstrates this distinction instead of displaying a misleading all-green result.
+
+## Reproduce and inspect
+
+Python 3.11+; run from the repository root:
+
+```bash
+python -m venv .venv
+# Windows: .venv/Scripts/Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -e ".[dev,notebooks]"
+python -m pytest -q
+python -m financial_controls.demo --period 2030-09 --output artifacts --verbose
+python scripts/run_notebooks.py
+python scripts/build_portfolio_assets.py
+python scripts/check_links.py
+python scripts/scan_public.py
+```
+
+The three [notebooks](notebooks/) are committed with **synthetic executed outputs**, so they can
+be read without a kernel. The runner creates fresh-kernel copies under artifacts; add
+`--publish` only to refresh the public notebooks after validating the fixture inputs.
+Open a generated `artifacts/<case>/report.html` locally for the full dashboard.
+
+Each case exports `detail.csv`, `summary.csv`, `allocations.csv`, `unassigned.csv`,
+`trace.csv`, `kpis.json` and `report.html`. Monetary CSV fields are integer cents.
+The [committed review samples](docs/outputs/) and diagrams are regenerated from the same fixtures.
+
+## Quality, confidentiality and boundaries
+
+Tests cover duplicated source IDs and configuration, null keys, invalid types, cent rounding,
+count-only differences, conflicting directions, partial justifications, unassigned benefits,
+conservation identities and metadata-only trace output. CI also executes the three notebooks,
+checks links and scans public text. [Validation procedure](docs/validation.md).
+
+No production notebook, query, connection, identifier, result or screenshot is distributed.
+Every new row, rule, rate and amount is invented. The public scholarship minimum of two subjects
+and 10% rate is a demonstration policy, not an institutional rule.
+See [security](docs/security.md), [business rules](docs/business_rules.md) and [limits](docs/limitations.md).
+
+## Evidence from real work vs public synthetic demonstration
+
+| Observed in the professional notebooks | Public reconstruction / additional engineering |
+|---|---|
+| Oracle extraction to Pandas, grouping, merges and business exceptions | Offline fixtures and an inert Oracle extraction contract |
+| Enrollment quantities and assigned/billed reconciliation | Three specific cases on a shared reusable engine |
+| Scholarship theory/application, composite keys, cardinality checks | Configurable fictional eligibility, strict configuration and an unassigned ledger |
+| Mother/detail reconciliation and HTML review; an Excel export in one control | Independent bridge, allocation ledger, summary/trace and portable exports |
+| Code and saved execution outputs | Automated tests, fresh-kernel execution and reproducible public visual evidence |
+
+The review was static and did not independently certify production accuracy, cadence,
+scale or business impact. The project does not claim a completed migration, production
+history tables, scheduling, measured savings or leadership seniority.
+
+## Choose your depth
+
+- [Recruiter walkthrough](docs/portfolio_walkthrough.md): business scope and three concrete examples.
+- [Interview deep dive](docs/interview_deep_dive.md): joins, money, evidence, failure modes and tradeoffs.
+- [Architecture](docs/architecture.md) · [Data dictionary](docs/synthetic_data_dictionary.md) · [Control matrix](docs/control_matrix.md).
+- [Professional summary](docs/professional_summary.md): wording grounded in the evidence.
+
+## Evolution from the legacy process
+
+ACL Analytics was the previous tool and the origin of the control knowledge. Historical
+scripts, screenshots and the earlier generic example are preserved in [legacy/](legacy/README.md)
+as an archive, outside the current portfolio walkthrough.

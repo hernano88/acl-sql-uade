@@ -18,9 +18,9 @@ Before publication:
 The scanner prints categories and paths, never matched secret values. It is not proof of
 absence of all secrets and does not inspect binary images, remote history or external
 configuration. Existing legacy screenshots remain unchanged and are not re-certified by this
-text scan. New illustrations are text diagrams only. No new screenshot of a production
+text scan. New illustrations and result snapshots are generated SVGs from synthetic data only. No new screenshot of a production
 system is included. Generated notebooks contain synthetic outputs only; canonical notebooks
-are committed without outputs or local paths.
+include executed synthetic outputs and scrubbed metadata, without local paths.
 
 Do not replace real IDs with hashes and call the data synthetic. Public scenarios are authored
 from scratch. If a real credential is ever found in history, stop publication and address
