@@ -2,11 +2,22 @@
 
 [Español](README.es.md) · [60-second walkthrough](docs/portfolio_walkthrough.md) · [Technical deep dive](docs/interview_deep_dive.md)
 
-**Three financial control workflows, reconstructed from professional billing-control notebooks into a reproducible, fully synthetic Python project.**
+**In my current work at a university, I develop and use three financial controls with Python, Pandas and Jupyter over authorized Oracle data.** They compare enrollment with assigned billing, assigned concepts with billed movements, and theoretical scholarships with applied benefits.
 
-The project connects academic enrollment, assigned billing concepts, posted movements and
-scholarship eligibility. It turns differences into a reviewable result: the original discrepancy,
-the evidence used to explain it, the remaining exposure, and a bridge back to source totals.
+I use these controls to detect missing or extra records, compare quantities and amounts,
+apply business explanations and identify differences that need review. This public project
+reconstructs those workflows in a sanitized, reproducible form with invented data and rules;
+operational records and private configuration stay outside the repository.
+
+## Technical profile demonstrated
+
+| Capability | How it is applied | Evidence in this project |
+|---|---|---|
+| **Python · Pandas · Jupyter** | Transform operational datasets, reconcile independent sources and make exceptions reviewable. | [Three executed notebooks](notebooks/) · [Control adapters](src/financial_controls/controls.py) |
+| **Oracle SQL** | Extract authorized data and prepare reconciliation universes through joins, filters and aggregations. | [SQL preparation example](sql/01_composite_reconciliation.sql) · [Configurable extraction contract](examples/oracle_connection.py) |
+| **Data modeling and joins** | Define grain and composite keys; validate one-to-one summaries and many-to-one rule lookups. | [Input contracts](src/financial_controls/contracts.py) · [Shared reconciliation engine](src/financial_controls/reconciliation.py) |
+| **Financial data quality** | Handle cents, signed differences, business exceptions, evidence allocations and source/detail totals. | [Monetary policy](src/financial_controls/money.py) · [Control matrix](docs/control_matrix.md) |
+| **Maintainable delivery** | Separate modules, test failure cases, trace stages, keep configuration external and export review reports. | [Tests](tests/test_financial_controls.py) · [Stage trace](src/financial_controls/trace.py) · [Reporting](src/financial_controls/reporting.py) |
 
 ![Three control cases and their synthetic results](docs/images/control-overview.svg)
 
@@ -18,10 +29,8 @@ the evidence used to explain it, the remaining exposure, and a bridge back to so
 | **[02 · Assigned → posted billing](docs/cases/02_billing.md)** | Completeness and accuracy of posted billing | Both sources have 9 lines, yet the amount differs by −40.00 and two keyed cases remain pending |
 | **[03 · Expected → applied scholarship](docs/cases/03_scholarship.md)** | Correct benefit application and attribution | 45.00 expected vs 65.00 applied; 3.00 lacks a program and must not be duplicated |
 
-**Those are fixture results, not production KPIs or measured savings.**
-The engineering contribution is explicit scope, validated joins, bounded justifications and
-independent reconciliation. Each case includes a bilingual study, an executed notebook,
-a generated result snapshot and review exports.
+Each case includes a bilingual study, an executed notebook, a generated result snapshot and
+review exports. The example outcomes use the public synthetic fixtures.
 
 ## End-to-end design
 

@@ -2,11 +2,22 @@
 
 [English](README.md) · [Recorrido de un minuto](docs/portfolio_walkthrough.es.md) · [Profundización técnica](docs/interview_deep_dive.es.md)
 
-**Tres flujos de control financiero reconstruidos desde notebooks de trabajo profesional en un proyecto Python reproducible y completamente sintético.**
+**En mi trabajo actual en una universidad desarrollo y utilizo tres controles financieros con Python, Pandas y Jupyter sobre datos autorizados de Oracle.** Comparan inscripciones con conceptos asignados a facturación, conceptos asignados con movimientos facturados y beca teórica con beca aplicada.
 
-El proyecto conecta inscripciones académicas, conceptos asignados a facturación, movimientos
-facturados y elegibilidad de becas. Convierte cada diferencia en un resultado revisable:
-discrepancia original, evidencia que la explica, remanente pendiente y conciliación con los totales de origen.
+Los uso para detectar registros faltantes o de más, comparar cantidades e importes, aplicar
+justificaciones de negocio e identificar diferencias que necesitan revisión. Este proyecto
+público reconstruye esos flujos de forma sanitizada y reproducible, con datos y reglas
+inventados; los registros operativos y la configuración privada quedan fuera del repositorio.
+
+## Perfil técnico demostrado
+
+| Capacidad | Cómo la aplico | Evidencia en este proyecto |
+|---|---|---|
+| **Python · Pandas · Jupyter** | Transformar datos operativos, conciliar fuentes independientes y preparar excepciones para revisión. | [Tres notebooks ejecutados](notebooks/) · [Adaptadores de control](src/financial_controls/controls.py) |
+| **Oracle SQL** | Extraer datos autorizados y preparar universos mediante joins, filtros y agregaciones. | [Ejemplo de preparación SQL](sql/01_composite_reconciliation.sql) · [Contrato de extracción configurable](examples/oracle_connection.py) |
+| **Modelado y joins** | Definir grano y claves compuestas; validar resúmenes uno-a-uno y reglas muchos-a-uno. | [Contratos de entrada](src/financial_controls/contracts.py) · [Motor compartido](src/financial_controls/reconciliation.py) |
+| **Calidad de datos financieros** | Tratar centavos, diferencias firmadas, excepciones, evidencia y cuadre de origen contra detalle. | [Política monetaria](src/financial_controls/money.py) · [Matriz de controles](docs/control_matrix.md) |
+| **Entrega mantenible** | Separar módulos, probar fallas, trazar etapas, externalizar configuración y exportar reportes de revisión. | [Tests](tests/test_financial_controls.py) · [Trazas](src/financial_controls/trace.py) · [Reportes](src/financial_controls/reporting.py) |
 
 ![Los tres controles y sus resultados sintéticos](docs/images/control-overview.svg)
 
@@ -18,10 +29,8 @@ discrepancia original, evidencia que la explica, remanente pendiente y conciliac
 | **[02 · Asignado → movimientos facturados](docs/cases/02_billing.es.md)** | Integridad de cantidades e importes facturados | Ambas fuentes tienen 9 líneas, pero difieren en −40,00 y quedan dos casos por clave pendientes |
 | **[03 · Beca teórica → beca aplicada](docs/cases/03_scholarship.es.md)** | Aplicación y atribución del beneficio | 45,00 teóricos frente a 65,00 aplicados; 3,00 no tienen carrera y no deben duplicarse |
 
-**Son resultados de datos ficticios, no KPI productivos ni ahorros medidos.**
-El aporte de ingeniería es hacer explícitos el alcance, los joins, los límites de las
-justificaciones y la conciliación independiente. Cada caso tiene página bilingüe, notebook
-ejecutado, vista de resultados y exportaciones para revisión.
+Cada caso tiene página bilingüe, notebook ejecutado, vista de resultados y exportaciones
+para revisión. Los resultados de ejemplo corresponden a las fixtures públicas sintéticas.
 
 ## Arquitectura de punta a punta
 
